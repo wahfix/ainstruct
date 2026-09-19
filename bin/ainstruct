@@ -7,7 +7,7 @@
 #   - npm / npx bin : @lace/ainstruct           → node_modules/.bin/ainstruct
 #   - Langsung      : ./bin/ainstruct <args>
 #
-# Delegasi ke setup-ai-rules.sh di direktori akar paket; arah kerja tetap pwd
+# Delegasi ke bin/setup-ai-rules.sh di direktori akar paket; arah kerja tetap pwd
 # (proyek konsumen). Path sendiri di-resolve melalui symlink sehingga bin yang
 # dipasang composer/npx menemukan direktori akar paket yang benar.
 # ============================================================================
@@ -36,6 +36,5 @@ if command -v readlink >/dev/null 2>&1; then
 fi
 
 BIN_DIR="$(cd "$(dirname "$SELF")" && pwd)"
-ROOT_DIR="$(cd "${BIN_DIR}/.." && pwd)"
 
-exec "${ROOT_DIR}/setup-ai-rules.sh" "$@"
+exec "${BIN_DIR}/setup-ai-rules.sh" "$@"

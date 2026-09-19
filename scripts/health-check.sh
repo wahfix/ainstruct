@@ -5,15 +5,15 @@
 # Verifies the AI-Instructions authoring repository stays consistent:
 #   1. Every path token used in backticks across .md files resolves to an
 #      existing file (no broken cross-references / "phantom" modules).
-#   2. Every instruction file under every <Framework>/ directory is
+#   2. Every instruction file under every templates/<Framework>/ directory is
 #      git-tracked (a tracked file is not affected by .gitignore ignores and
 #      reaches PRs).
 #   3. No generated distribution artifacts are present in the repo root.
 #   4. Anti-AI-slop gate (scripts/antislop-check.sh) — dokumen authoring bebas
 #      pola marketing/AI-slop (buzzword, klaim tanpa bukti, frase generik).
 #
-# Frameworks are auto-discovered: any non-hidden top-level directory that
-# contains an ai-instructions.md marker file (mirrors setup-ai-rules.sh).
+# Frameworks are auto-discovered: any non-hidden directory under templates/
+# that contains an ai-instructions.md marker file (mirrors setup-ai-rules.sh).
 #
 # Usage: scripts/health-check.sh [--quiet]
 # Exit code 0 = all checks pass; non-zero = violations found.
@@ -49,16 +49,16 @@ SKIP_OR_EXTERNAL='^(app/|resources/|routes/|database/|config/|tests/|vendor/|pub
 
 cd "$ROOT" || exit 1
 
-# Discover framework directories (any non-hidden top-level dir with an ai-instructions.md).
+# Discover framework directories (any non-hidden dir under templates/ with an ai-instructions.md).
 mapfile -t framework_dirs < <(
   while IFS= read -r d; do
     d="${d#./}"
     [[ -d "$d" && -f "$d/ai-instructions.md" ]] && printf '%s\n' "$d"
-  done < <(find . -mindepth 1 -maxdepth 1 -type d -not -name '.*')
+  done < <(find templates -mindepth 1 -maxdepth 1 -type d -not -name '.*' 2>/dev/null)
 )
 
 if [[ ${#framework_dirs[@]} -eq 0 ]]; then
-  printf 'health-check: tidak ada framework dir yang ditemukan (butuh <Framework>/ai-instructions.md).\n' >&2
+  printf 'health-check: tidak ada framework dir yang ditemukan (butuh templates/<Framework>/ai-instructions.md).\n' >&2
   exit 1
 fi
 

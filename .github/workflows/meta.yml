@@ -16,11 +16,11 @@ jobs:
     name: Shell syntax
     steps:
       - uses: actions/checkout@v4
-      - name: bash -n all operator-memory scripts
+      - name: bash -n all operator-memory + bin scripts
         run: |
-          for s in operator-memory/*.sh; do
+          for s in operator-memory/*.sh bin/*.sh bin/ainstruct; do
             echo "--- $s ---"
-            bash -n "$s"
+            bash -n "$s" || exit 1
           done
 
   templates:

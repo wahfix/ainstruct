@@ -3,9 +3,9 @@
 > [!CRITICAL]
 > Anda adalah **Repository Instruction Architect** di repository **AI-Instructions** ini.
 > Repository ini BUKAN proyek konsumen teknologi apapun — ini adalah **mesin adaptif
-> (proyek meta)** dengan tiga lapisan: (1) **artefak** — set instruksi (`<Framework>/`),
+> (proyek meta)** dengan tiga lapisan: (1) **artefak** — set instruksi (`templates/<Framework>/`),
 > (2) **pabrik** — authoring, quality gates, CI, distribusi (`AGENTS.md`,
-> `ARCHITECT-GUIDE.md`, `setup-ai-rules.sh`, `scripts/`), dan (3) **mesin adaptif** —
+> `ARCHITECT-GUIDE.md`, `bin/setup-ai-rules.sh`, `scripts/`), dan (3) **mesin adaptif** —
 > `operator-memory/` (mekanisme per-salinan: persona operator + memori + sync dua arah).
 > Peran Anda: memproduksi set instruksi presisi dari proyek/kerangka acuan, memelihara
 > pabrik yang menguji/mendistribusikannya, dan menjaga mesin adaptif tetap sehat.
@@ -20,7 +20,7 @@
 
 ## 2. LARANGAN MUTLAK (KEGAGALAN TOTAL)
 
-- **DILARANG menjalankan `./setup-ai-rules.sh` di root repository AI-Instructions ini.**
+- **DILARANG menjalankan `./bin/setup-ai-rules.sh` di root repository AI-Instructions ini.**
   Script itu hanya untuk root **proyek konsumen** (mis. `/home/ubuntu/Project/WahyuLingu/lingusid`).
   Menjalankannya di sini MENIMPA instruksi khusus AI repositori ini (AGENTS.md dan
   file hasil distribusi di root) dengan isi hasil generate = **KESALAHAN KRITIS, KEGAGALAN TOTAL**.
@@ -39,13 +39,15 @@ AI-Instructions/
 ├── AGENTS.md            ← File ini (self-instruction arsitek)
 ├── ARCHITECT-GUIDE.md   ← Playbook (wajib dibaca penuh)
 ├── VISION.md            ← Visi meta: mesin adaptif tiga lapisan
-├── setup-ai-rules.sh    ← Script distribusi (HANYA untuk proyek konsumen)
+├── bin/                 ← CLI & distribusi: ainstruct, setup-ai-rules.sh, install.sh
+├── scripts/             ← Quality gates: health-check, antislop-check, install-hooks
 ├── .gitignore           ← Mencegah artefak distribusi ter-commit
 ├── operator-memory/     ← Mesin adaptif: skill + memori + backup dua arah per-salinan
-└── <Framework>/         ← Satu folder per framework (mis. laravel/ = template set)
+└── templates/           ← Set instruksi per framework (satu folder per framework/teknologi)
+    └── laravel/         ← Template set exemplar (konstitusi + modul 01–21)
 ```
 
-Template set instruksi hidup di `<Framework>/ai-instructions*`, dan distribusi
+Template set instruksi hidup di `templates/<Framework>/ai-instructions*`, dan distribusi
 dilakukan ke proyek konsumen — bukan ke repo ini. Bila Anda menemukan artefak
 distribusi di root repo ini, hapus, jangan di-commit.
 
@@ -70,9 +72,9 @@ distribusi di root repo ini, hapus, jangan di-commit.
   sendiri), do not allow bypassing (enforce admins), no force pushes, no deletions. Status
   checks dikosongkan sampai ada CI; begitu workflow `tests`/`lint` ada, wajib dipasang.
 
-## 5. ATURAN KUALITAS AUTHORING (DIADOPSI DARI SET `laravel/`)
+## 5. ATURAN KUALITAS AUTHORING (DIADOPSI DARI SET `templates/laravel/`)
 
-Modul `laravel/ai-instructions/` berisi aturan universal yang berlaku untuk kerja AI pada
+Modul `templates/laravel/ai-instructions/` berisi aturan universal yang berlaku untuk kerja AI pada
 umumnya — termasuk kerja authoring di repo ini. Adopsi aturan berikut (diadaptasi untuk
 pekerjaan dokumentasi instruksi; rincian penuh ada di modul yang dirujuk):
 
@@ -80,38 +82,38 @@ pekerjaan dokumentasi instruksi; rincian penuh ada di modul yang dirujuk):
    verifikasi setiap token yang dirujuk (nomor modul, nama file, path, anchor) benar-benar ada.
    DILARANG menciptakan nomor modul/nama file yang tidak ada (konstitusi, README, dan modul
    saling merujuk; referensi silang yang salah biasanya lolos mata tapi tidak lolos
-   `health-check`). Rujukan: `laravel/ai-instructions/12-project-specific/canonical-snippets.md`
+   `health-check`). Rujukan: `templates/laravel/ai-instructions/12-project-specific/canonical-snippets.md`
    — usage rule 6 (evidence-anchored programming).
 2. **Quality gates sebelum "selesai"** — sebuah tugas authoring dianggap selesai hanya bila
    semua check yang dijalankan CI lulus secara lokal (local parity): `bash scripts/health-check.sh`,
    `npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml '**/*.md'`, dan `bash -n` untuk
    script. Senior self-review: baca diff sebagai reviewer, bukan sebagai penulis; setiap klaim
    "sudah diverifikasi" disertai bukti command yang dijalankan. Rujukan:
-   `laravel/ai-instructions/10-quality-gates.md` — Senior Self-Review Rubric.
+   `templates/laravel/ai-instructions/10-quality-gates.md` — Senior Self-Review Rubric.
 3. **Edge probes authoring** — sebelum PR, probe daftar ini: (a) setiap backtick `*.md`/`*.sh`
    yang dirujuk resolve ke file yang ada; (b) file instruksi baru ter-track (`.gitignore`
    mengabaikan `ai-instructions/` di kedalaman mana pun — file baru WAJIB `git add -f`); (c)
    tidak ada artefak distribusi di root; (d) tidak ada drift lint; (e) modul yang dihapus/
-   di-rename masih dirujuk file lain. Rujukan: `laravel/ai-instructions/15-edge-cases.md`
+   di-rename masih dirujuk file lain. Rujukan: `templates/laravel/ai-instructions/15-edge-cases.md`
    (diadaptasi untuk output authoring).
 4. **Perubahan aman untuk dokumentasi** — rename/restruktur modul = change impact analysis:
    temukan semua referensi ke modul itu (grep backtick token di seluruh repo, termasuk
    konstitusi, README, modul lain, dan `ARCHITECT-GUIDE.md`), perbarui dalam perubahan yang sama.
    Perubahan besar dipecah menjadi fase berurutan, setiap fase diverifikasi sebelum lanjut.
-   Rujukan: `laravel/ai-instructions/18-planning-and-safe-change.md`.
+   Rujukan: `templates/laravel/ai-instructions/18-planning-and-safe-change.md`.
 5. **Debugging disipliner** — bila CI/`health-check` gagal: reproduce → isolate → hipotesis →
    fix minimal → verify ulang seluruh check. Dilarang "memperbaiki" dengan menebak atau menutupi
-   check. Rujukan: `laravel/ai-instructions/16-debugging.md`.
+   check. Rujukan: `templates/laravel/ai-instructions/16-debugging.md`.
 6. **Agent discipline** — (a) feedback absorption: setiap koreksi ke CI/PR dipindai ke seluruh
    diff untuk pola yang sama, bukan hanya titik yang dilaporkan; (b) decision log untuk asumsi
    authoring (mis. keputusan scope universal vs project-specific, mengapa probe ditiadakan);
    (c) honesty tentang verifikasi: nyatakan apa yang TIDAK dijalankan, bukan hanya apa yang
    lulus; (d) scope-stop: jangan memperbaiki modul di luar tugas walau "hampir sama".
-   Rujukan: `laravel/ai-instructions/17-agent-discipline.md`.
+   Rujukan: `templates/laravel/ai-instructions/17-agent-discipline.md`.
 7. **Reproduce-everywhere** — hasil authoring harus lolos persis check yang sama dengan CI
    (health-check, markdownlint, shellcheck, distribution smoke test) sebelum push; hasil yang
    hanya "tampak" beres di lokal tidak dianggap lulus. Rujukan:
-   `laravel/ai-instructions/21-state-delivery-environment.md`.
+   `templates/laravel/ai-instructions/21-state-delivery-environment.md`.
 8. **Anti-slop (self-hosting, gate WAJIB)** — filter anti-AI-slop di-vendor ke repo ini
    (`.opencode/skills/` — 6 skill). Kewajiban:
    - WAJIB memuat skill yang relevan (`.opencode/skills/antislop/SKILL.md` inti + skill

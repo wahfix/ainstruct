@@ -29,13 +29,14 @@ jobs:
           set -euo pipefail
           REPO="$(pwd)"
           TMP="$(mktemp -d)"
-          mkdir -p "$TMP/laravel"
-          cp laravel/ai-instructions.md "$TMP/laravel/"
-          cp -r laravel/ai-instructions "$TMP/laravel/ai-instructions"
-          cp laravel/ainstruct-detect.txt "$TMP/laravel/"
-          cp setup-ai-rules.sh "$TMP/"
+          mkdir -p "$TMP/templates/laravel"
+          cp templates/laravel/ai-instructions.md "$TMP/templates/laravel/"
+          cp -r templates/laravel/ai-instructions "$TMP/templates/laravel/ai-instructions"
+          cp templates/laravel/ainstruct-detect.txt "$TMP/templates/laravel/"
+          mkdir -p "$TMP/bin"
+          cp bin/setup-ai-rules.sh "$TMP/bin/"
           cd "$TMP"
-          ./setup-ai-rules.sh laravel >/dev/null
+          ./bin/setup-ai-rules.sh laravel >/dev/null
           for expected in \
             AGENTS.md CLAUDE.md GEMINI.md .cursorrules .windsurfrules \
             .continuerules .aider.conf.yml opencode.json \
@@ -49,22 +50,22 @@ jobs:
           grep -q 'default_agent": "build"' opencode.json \
             || { echo "FAIL: opencode.json tidak mengonfigurasi default build agent"; exit 1; }
           printf '\n# CUSTOM\n' >> ai-instructions/master/ai-instructions.md
-          ./setup-ai-rules.sh laravel >/dev/null
+          ./bin/setup-ai-rules.sh laravel >/dev/null
           grep -q 'CUSTOM' ai-instructions/master/ai-instructions.md
           # reset: buang custom master, master kembali identik template
-          ./setup-ai-rules.sh reset laravel >/dev/null
+          ./bin/setup-ai-rules.sh reset laravel >/dev/null
           if grep -q 'CUSTOM' ai-instructions/master/ai-instructions.md; then
             echo "FAIL: reset harus membuang custom"; exit 1
           fi
-          if ! cmp -s ai-instructions/master/ai-instructions.md laravel/ai-instructions.md; then
+          if ! cmp -s ai-instructions/master/ai-instructions.md "$REPO/templates/laravel/ai-instructions.md"; then
             echo "FAIL: master hasil reset != template"; exit 1
           fi
           # AGENTS.md (hasil distribusi dari master) harus sama dengan template
-          if ! cmp -s AGENTS.md laravel/ai-instructions.md; then
+          if ! cmp -s AGENTS.md "$REPO/templates/laravel/ai-instructions.md"; then
             echo "FAIL: AGENTS.md setelah reset != template"; exit 1
           fi
           # wipe --force: semua artefak hilang
-          ./setup-ai-rules.sh wipe --force >/dev/null
+          ./bin/setup-ai-rules.sh wipe --force >/dev/null
           for gone in \
             AGENTS.md CLAUDE.md GEMINI.md .cursorrules .windsurfrules \
             .continuerules .aider.conf.yml opencode.json \
@@ -76,49 +77,49 @@ jobs:
           # template manager: template milik konsumen (AINSTRUCT_HOME terisolasi)
           export AINSTRUCT_HOME="$TMP/ahome"
           # list: built-in laravel terlihat
-          ./setup-ai-rules.sh template list | grep 'laravel' >/dev/null || { echo "FAIL: list tidak memuat laravel"; exit 1; }
+          ./bin/setup-ai-rules.sh template list | grep 'laravel' >/dev/null || { echo "FAIL: list tidak memuat laravel"; exit 1; }
           # clone built-in -> custom (customisasi wajib clone; built-in terproteksi)
-          ./setup-ai-rules.sh template clone mylaravel laravel >/dev/null
+          ./bin/setup-ai-rules.sh template clone mylaravel laravel >/dev/null
           test -f "$AINSTRUCT_HOME/templates/mylaravel/ai-instructions.md" \
             || { echo "FAIL: clone tidak membuat template custom"; exit 1; }
           # path custom vs built-in (warn protected)
-          ./setup-ai-rules.sh template path mylaravel | grep "$AINSTRUCT_HOME" >/dev/null \
+          ./bin/setup-ai-rules.sh template path mylaravel | grep "$AINSTRUCT_HOME" >/dev/null \
             || { echo "FAIL: path custom salah"; exit 1; }
           # distribusi memakai template custom: marker konsumen muncul
           mkdir -p "$TMP/proj-custom"
-          ( cd "$TMP/proj-custom" && "$TMP/setup-ai-rules.sh" mylaravel 2>&1 \
+          ( cd "$TMP/proj-custom" && "$TMP/bin/setup-ai-rules.sh" mylaravel 2>&1 \
               | grep 'Template: custom konsumen' >/dev/null ) \
             || { echo "FAIL: distribusi tidak memakai template konsumen"; exit 1; }
           # built-in TERPROTEKSI: tidak bisa dihapus / di-update langsung
-          ./setup-ai-rules.sh template delete laravel >/dev/null 2>&1 && { echo "FAIL: built-in terhapus"; exit 1; }
-          ./setup-ai-rules.sh template update laravel >/dev/null 2>&1 && { echo "FAIL: built-in ter-update"; exit 1; }
-          test -d "$REPO/laravel" || { echo "FAIL: built-in hilang"; exit 1; }
+          ./bin/setup-ai-rules.sh template delete laravel >/dev/null 2>&1 && { echo "FAIL: built-in terhapus"; exit 1; }
+          ./bin/setup-ai-rules.sh template update laravel >/dev/null 2>&1 && { echo "FAIL: built-in ter-update"; exit 1; }
+          test -d "$REPO/templates/laravel" || { echo "FAIL: built-in hilang"; exit 1; }
           # delete custom tanpa --force di non-interaktif ditolak
-          ./setup-ai-rules.sh template delete mylaravel >/dev/null 2>&1 && { echo "FAIL: delete tanpa force"; exit 1; }
+          ./bin/setup-ai-rules.sh template delete mylaravel >/dev/null 2>&1 && { echo "FAIL: delete tanpa force"; exit 1; }
           # update custom dari built-in (--force)
-          ./setup-ai-rules.sh template update mylaravel --from laravel --force >/dev/null
-          diff -q "$AINSTRUCT_HOME/templates/mylaravel/ai-instructions.md" "$REPO/laravel/ai-instructions.md" >/dev/null \
+          ./bin/setup-ai-rules.sh template update mylaravel --from laravel --force >/dev/null
+          diff -q "$AINSTRUCT_HOME/templates/mylaravel/ai-instructions.md" "$REPO/templates/laravel/ai-instructions.md" >/dev/null \
             || { echo "FAIL: update custom tidak sinkron"; exit 1; }
           # create scaffold kosong
-          ./setup-ai-rules.sh template create blank >/dev/null
+          ./bin/setup-ai-rules.sh template create blank >/dev/null
           test -f "$AINSTRUCT_HOME/templates/blank/ai-instructions.md" \
             || { echo "FAIL: create tidak membuat scaffold"; exit 1; }
           # delete custom --force
-          ./setup-ai-rules.sh template delete mylaravel --force >/dev/null
+          ./bin/setup-ai-rules.sh template delete mylaravel --force >/dev/null
           test -e "$AINSTRUCT_HOME/templates/mylaravel" && { echo "FAIL: custom tidak terhapus"; exit 1; }
 
           # adapter: bin/ainstruct via symlink vendor/bin (composer / npx style)
           mkdir -p "$TMP/vendor/lace/ainstruct/bin" "$TMP/vendor/bin"
-          cp "$REPO/setup-ai-rules.sh" "$TMP/vendor/lace/ainstruct/"
+          cp "$REPO/bin/setup-ai-rules.sh" "$TMP/vendor/lace/ainstruct/bin/"
           cp "$REPO/bin/ainstruct" "$TMP/vendor/lace/ainstruct/bin/"
-          cp -r "$REPO/laravel" "$TMP/vendor/lace/ainstruct/laravel"
+          cp -r "$REPO/templates" "$TMP/vendor/lace/ainstruct/templates"
           ln -s ../lace/ainstruct/bin/ainstruct "$TMP/vendor/bin/ainstruct"
           ( cd "$TMP" && ./vendor/bin/ainstruct laravel >/dev/null )
           test -f "$TMP/AGENTS.md" || { echo "FAIL: bin/ainstruct tidak mendistribusikan"; exit 1; }
 
           # adapter: install.sh (curl | sh) via tarball lokal
           mkdir -p "$TMP/curl"
-          cp "$REPO/install.sh" "$TMP/curl/"
+          cp "$REPO/bin/install.sh" "$TMP/curl/"
           # bentuk codeload (top-level dir) — realistis untuk curl|sh
           git -C "$REPO" archive --format=tar.gz --prefix=AI-Instructions-main/ -o "$TMP/curl/ainstruct.tar.gz" HEAD
           ( cd "$TMP/curl" && AINSTRUCT_CACHE="$TMP/curl/.cache" \
@@ -133,7 +134,7 @@ jobs:
           # bentuk datar (git archive tanpa prefix) juga harus didukung
           rm -rf "$TMP/curl2"
           mkdir -p "$TMP/curl2"
-          cp "$REPO/install.sh" "$TMP/curl2/"
+          cp "$REPO/bin/install.sh" "$TMP/curl2/"
           git -C "$REPO" archive --format=tar.gz -o "$TMP/curl2/ainstruct.tar.gz" HEAD
           ( cd "$TMP/curl2" && AINSTRUCT_CACHE="$TMP/curl2/.cache" \
               AINSTRUCT_SOURCE_URL="file://$TMP/curl2/ainstruct.tar.gz" \
@@ -147,34 +148,34 @@ jobs:
           printf '{\n  "require": {"laravel/framework": "^12.0"}\n}\n' > "$INITDIR/composer.json"
           printf '{\n  "dependencies": {"@inertiajs/vue3": "^1.0", "vue": "^3.4", "typescript": "^5.0"}\n}\n' > "$INITDIR/package.json"
           # dry-run: laporkan laravel berkeyakinan CONFIRMED, tanpa mengubah proyek
-          ( cd "$INITDIR" && "$TMP/setup-ai-rules.sh" init --dry-run 2>&1 \
+          ( cd "$INITDIR" && "$TMP/bin/setup-ai-rules.sh" init --dry-run 2>&1 \
               | grep -q 'laravel' ) \
             || { echo "FAIL: init --dry-run tidak melaporkan laravel"; exit 1; }
-          ( cd "$INITDIR" && "$TMP/setup-ai-rules.sh" init --dry-run 2>&1 \
+          ( cd "$INITDIR" && "$TMP/bin/setup-ai-rules.sh" init --dry-run 2>&1 \
               | grep -q 'CONFIRMED' ) \
             || { echo "FAIL: init tidak melaporkan keyakinan CONFIRMED"; exit 1; }
           test ! -e "$INITDIR/AGENTS.md" || { echo "FAIL: init --dry-run membuat artefak"; exit 1; }
           # init --force: distribusikan template terdeteksi
-          ( cd "$INITDIR" && "$TMP/setup-ai-rules.sh" init --force >/dev/null ) \
+          ( cd "$INITDIR" && "$TMP/bin/setup-ai-rules.sh" init --force >/dev/null ) \
             || { echo "FAIL: init --force gagal"; exit 1; }
           test -f "$INITDIR/AGENTS.md" || { echo "FAIL: init tidak mendistribusikan AGENTS.md"; exit 1; }
           # init di proyek tanpa sinyal: harus gagal (tidak pernah menebak)
           EMPTY="$TMP/init-empty"
           mkdir -p "$EMPTY"
-          ( cd "$EMPTY" && "$TMP/setup-ai-rules.sh" init >/dev/null 2>&1 ) \
+          ( cd "$EMPTY" && "$TMP/bin/setup-ai-rules.sh" init >/dev/null 2>&1 ) \
             && { echo "FAIL: init di proyek kosong harus gagal"; exit 1; }
           # init --template: paksa template tanpa deteksi
-          ( cd "$EMPTY" && "$TMP/setup-ai-rules.sh" init --template laravel --force >/dev/null ) \
+          ( cd "$EMPTY" && "$TMP/bin/setup-ai-rules.sh" init --template laravel --force >/dev/null ) \
             || { echo "FAIL: init --template gagal"; exit 1; }
           test -f "$EMPTY/AGENTS.md" || { echo "FAIL: init --template tidak mendistribusikan"; exit 1; }
           # custom template dengan detektor sendiri menang atas built-in (shadow)
-          ./setup-ai-rules.sh template create laravel --force >/dev/null
+          ./bin/setup-ai-rules.sh template create laravel --force >/dev/null
           printf '5|file|marker-custom|Penanda proyek custom\n' \
             > "$AINSTRUCT_HOME/templates/laravel/ainstruct-detect.txt"
           CUST="$TMP/init-custom"
           mkdir -p "$CUST"
           touch "$CUST/marker-custom"
-          ( cd "$CUST" && "$TMP/setup-ai-rules.sh" init --force 2>&1 \
+          ( cd "$CUST" && "$TMP/bin/setup-ai-rules.sh" init --force 2>&1 \
               | grep 'Template: custom konsumen' >/dev/null ) \
             || { echo "FAIL: init tidak memakai template custom (shadow)"; exit 1; }
           test -f "$CUST/AGENTS.md" || { echo "FAIL: init custom tidak mendistribusikan"; exit 1; }

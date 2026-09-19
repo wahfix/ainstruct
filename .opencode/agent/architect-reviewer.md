@@ -30,7 +30,7 @@ terhadap playbook, **bukan** kebenaran detail teknis (itu urusan role lain).
   2 (dilarang kerja di main), 3 (commit ringkas), 4 (git init), 5 (protokol
   `MASTER_BUILD_SPECIFICATION.md` sebelum kode). Klausa 5 wajib muncul di
   konstitusi + modul 01/02/10/11 + referensi cepat.
-- **REFERENCE BAR**: set setara/lebih tinggi dari acuan `laravel/`; tidak lebih
+- **REFERENCE BAR**: set setara/lebih tinggi dari acuan `templates/laravel/`; tidak lebih
   tipis/generik.
 - **Kebebasan dari repo contoh**: tidak ada nama/path/pola/evidence dari
   repository contoh di bagian manapun (Klausa 1).

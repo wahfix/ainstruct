@@ -5,22 +5,22 @@
 # Script ini mendistribusikan file instruksi AI ke direktori tempat script
 # dieksekusi, sehingga semua AI coding assistant dapat membacanya.
 #
-# Penggunaan:
-#   chmod +x setup-ai-rules.sh
-#   ./setup-ai-rules.sh [framework]           # Distribusikan instruksi ke pwd
-#   ./setup-ai-rules.sh reset [framework]     # Reset instruksi ke default template
-#   ./setup-ai-rules.sh wipe [--force]        # Hapus SEMUA artefak instruksi dari pwd
-#   ./setup-ai-rules.sh template <cmd>        # Kelola template milik konsumen
-#   ./setup-ai-rules.sh help                  # Tampilkan bantuan
+# Penggunaan (script hidup di bin/ — callable sebagai `ainstruct` atau langsung):
+#   chmod +x bin/setup-ai-rules.sh
+#   ./bin/setup-ai-rules.sh [framework]       # Distribusikan instruksi ke pwd
+#   ./bin/setup-ai-rules.sh reset [framework] # Reset instruksi ke default template
+#   ./bin/setup-ai-rules.sh wipe [--force]    # Hapus SEMUA artefak instruksi dari pwd
+#   ./bin/setup-ai-rules.sh template <cmd>    # Kelola template milik konsumen
+#   ./bin/setup-ai-rules.sh help              # Tampilkan bantuan
 #
 # Contoh:
-#   ./setup-ai-rules.sh laravel
-#   ./setup-ai-rules.sh java
-#   ./setup-ai-rules.sh          # Auto-detect dari direktori saat ini
-#   ./setup-ai-rules.sh reset laravel   # Buang custom master, kembali ke default template
-#   ./setup-ai-rules.sh wipe --force    # Hapus semua instruksi tanpa konfirmasi
-#   ./setup-ai-rules.sh template clone mylaravel laravel   # customisasi built-in
-#   ./setup-ai-rules.sh template create myfw              # buat template sendiri
+#   ainstruct laravel
+#   ainstruct java
+#   ainstruct                # Auto-detect dari direktori saat ini
+#   ainstruct reset laravel  # Buang custom master, kembali ke default template
+#   ainstruct wipe --force   # Hapus semua instruksi tanpa konfirmasi
+#   ainstruct template clone mylaravel laravel   # customisasi built-in
+#   ainstruct template create myfw              # buat template sendiri
 #
 # Framework yang didukung:
 #   - laravel   → Laravel AI Instructions
@@ -45,7 +45,7 @@
 #   2. Edit file master sesuai kebutuhan Anda.
 #   3. Jalankan ulang script ini → versi custom didistribusikan ke semua file.
 #   4. Untuk membuang custom dan kembali ke default template:
-#        ./setup-ai-rules.sh reset <framework>
+#        ainstruct reset <framework>
 #   DILARANG mengedit file hasil distribusi (AGENTS.md, CLAUDE.md, ai-instructions/*.md, dll)
 #   langsung, karena akan ditimpa setiap kali script dijalankan.
 # ============================================================================
@@ -75,8 +75,9 @@ TARGET_DIR="$(pwd)"
 FRAMEWORK=""
 
 # Template milik konsumen (dapat dibuat/hapus/perbarui) vs built-in paket (terproteksi).
-# Built-in hidup di SCRIPT_DIR; template konsumen hidup di AINSTRUCT_HOME/templates
-# dan menang (shadow) atas built-in jika namanya sama.
+# Built-in hidup di templates/ (relatif dari bin/); template konsumen hidup di
+# AINSTRUCT_HOME/templates dan menang (shadow) atas built-in jika namanya sama.
+BUILTIN_TEMPLATES_DIR="$(cd "${SCRIPT_DIR}/../templates" && pwd)"
 AINSTRUCT_HOME_DIR="${AINSTRUCT_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ainstruct}"
 CONSUMER_TEMPLATES_DIR="${AINSTRUCT_HOME_DIR}/templates"
 
@@ -109,7 +110,7 @@ show_header() {
 show_frameworks() {
     echo -e "${YELLOW}📂 Frameworks tersedia:${NC}"
     echo -e "  ${BLUE}Built-in (terproteksi):${NC}"
-    for dir in "${SCRIPT_DIR}"/*/; do
+    for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
         if [ -d "$dir" ] && [ -f "$dir/ai-instructions.md" ]; then
             echo -e "   • ${GREEN}$(basename "$dir")${NC}"
         fi
@@ -141,7 +142,7 @@ auto_detect_framework() {
             fi
         done
     fi
-    for dir in "${SCRIPT_DIR}"/*/; do
+    for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
         if [ -d "$dir" ] && [ -f "$dir/ai-instructions.md" ]; then
             frameworks+=("$(basename "$dir")")
         fi
@@ -168,7 +169,7 @@ auto_detect_framework() {
         echo "Usage: $0 <framework>"
         exit 1
     else
-        echo -e "${RED}❌ No frameworks found in ${SCRIPT_DIR}${NC}"
+        echo -e "${RED}❌ No frameworks found in ${BUILTIN_TEMPLATES_DIR}${NC}"
         exit 1
     fi
 }
@@ -193,7 +194,7 @@ find_template_dir() {
     fi
 
     if [ -z "$result" ]; then
-        for dir in "${SCRIPT_DIR}"/*/; do
+        for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
             if [ -d "$dir" ] && [ "$(to_lower "$(basename "$dir")")" = "$lower" ] && [ -f "${dir}ai-instructions.md" ]; then
                 result="${dir%/}"
                 break
@@ -224,7 +225,7 @@ is_builtin_template() {
     local lower
     lower="$(to_lower "$name")"
     local dir
-    for dir in "${SCRIPT_DIR}"/*/; do
+    for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
         if [ -d "$dir" ] && [ -f "$dir/ai-instructions.md" ] && [ "$(to_lower "$(basename "$dir")")" = "$lower" ]; then
             printf '%s' "${dir%/}"
             return 0
@@ -260,7 +261,7 @@ template_list() {
     echo ""
     echo -e "  ${BLUE}Built-in (TERPROTEKSI):${NC}"
     local n=0 dir
-    for dir in "${SCRIPT_DIR}"/*/; do
+    for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
         if [ -f "$dir/ai-instructions.md" ]; then
             echo -e "    • ${GREEN}$(basename "$dir")${NC}"
             n=$((n + 1))
@@ -639,7 +640,7 @@ init_cmd() {
             fi
         done
     fi
-    for dir in "${SCRIPT_DIR}"/*/; do
+    for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
         if [ -d "$dir" ] && [ -f "$dir/ai-instructions.md" ]; then
             name="$(basename "$dir")"
             dup=0
@@ -873,14 +874,14 @@ Options:
   init --dry-run  Laporan deteksi tanpa mengubah proyek.
 
 Examples:
-  ./setup-ai-rules.sh laravel          Distribusikan framework laravel
-  ./setup-ai-rules.sh init             Deteksi stack proyek & scaffold yang cocok
-  ./setup-ai-rules.sh init --dry-run   Laporan deteksi (tanpa perubahan)
-  ./setup-ai-rules.sh init --template laravel --force   Paksa template tanpa deteksi
-  ./setup-ai-rules.sh template list    Daftar template (built-in & custom)
-  ./setup-ai-rules.sh template clone mylaravel laravel   # customisasi built-in
-  ./setup-ai-rules.sh reset laravel    Kembalikan ke default template lalu distribusikan
-  ./setup-ai-rules.sh wipe --force     Hapus semua instruksi tanpa konfirmasi
+  ainstruct laravel          Distribusikan framework laravel
+  ainstruct init             Deteksi stack proyek & scaffold yang cocok
+  ainstruct init --dry-run   Laporan deteksi (tanpa perubahan)
+  ainstruct init --template laravel --force   Paksa template tanpa deteksi
+  ainstruct template list    Daftar template (built-in & custom)
+  ainstruct template clone mylaravel laravel   # customisasi built-in
+  ainstruct reset laravel    Kembalikan ke default template lalu distribusikan
+  ainstruct wipe --force     Hapus semua instruksi tanpa konfirmasi
 USAGE
 }
 
@@ -964,7 +965,7 @@ wipe_instructions() {
     echo -e "${GREEN}✅ Wipe selesai! ${count} artefak dihapus.${NC}"
     echo -e "${GREEN}══════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "${YELLOW}ℹ️  Untuk memasang kembali, jalankan: ./setup-ai-rules.sh <framework>${NC}"
+    echo -e "${YELLOW}ℹ️  Untuk memasang kembali, jalankan: ainstruct <framework>${NC}"
 }
 
 # ============================================================================
@@ -1238,10 +1239,10 @@ echo ""
 echo -e "${YELLOW}💡 Tambah instruksi custom:${NC}"
 echo "   1. Edit ai-instructions/master/ai-instructions.md (dan/atau ai-instructions/master/ai-instructions/)"
 echo "   2. Jalankan ulang script untuk mendistribusikan ulang custom-nya:"
-echo "      ./setup-ai-rules.sh ${FRAMEWORK_NAME}"
+echo "      ainstruct ${FRAMEWORK_NAME}"
 echo ""
 echo -e "${YELLOW}💡 Tip:${NC} Untuk mengganti framework, jalankan:"
-echo "   ./setup-ai-rules.sh <framework>"
+echo "   ainstruct <framework>"
 echo ""
 echo -e "${YELLOW}📂 Frameworks tersedia:${NC}"
 show_frameworks

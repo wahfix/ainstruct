@@ -14,11 +14,10 @@ apa yang TIDAK dijalankan.
 
 1. **Integritas instruksi**: `bash scripts/health-check.sh` (0 kegagalan wajib).
 2. **Lint markdown**: `npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml '**/*.md'`.
-3. **Sintaks shell**: `bash -n` untuk `setup-ai-rules.sh`, `scripts/*.sh`,
-   `install.sh`, `bin/*`.
-4. **Shellcheck**: `shellcheck setup-ai-rules.sh scripts/*.sh install.sh bin/*`
-   bila tersedia.
-5. **Smoke test distribusi**: jalankan alur `setup-ai-rules.sh` di temp dir
+3. **Sintaks shell**: `bash -n` untuk `bin/setup-ai-rules.sh`, `scripts/*.sh`,
+   `bin/*`, `bin/ainstruct`.
+4. **Shellcheck**: `shellcheck bin/setup-ai-rules.sh scripts/*.sh bin/install.sh bin/*`
+5. **Smoke test distribusi**: jalankan alur `bin/setup-ai-rules.sh` di temp dir
    (mirip `.github/workflows/tests.yml`) bila relevan terhadap perubahan.
 
 ## Metode kerja

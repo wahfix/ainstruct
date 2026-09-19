@@ -18,11 +18,10 @@
     },
     "files": [
         "bin",
-        "laravel",
-        "setup-ai-rules.sh",
-        "install.sh",
+        "templates",
         "composer.json",
-        "README.md"
+        "README.md",
+        "LICENSE"
     ],
     "engines": {
         "node": ">=16"
