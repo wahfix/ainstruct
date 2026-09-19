@@ -129,7 +129,7 @@ menjalankan fungsi yang sama: `distribute`, `reset`, `wipe`, `init`, `template`.
 ### 1. curl | sh (tanpa instalasi)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/lacevoid/AI-Instructions/main/install.sh | sh -s -- laravel
+curl -fsSL https://raw.githubusercontent.com/wahfix/ainstruct/main/install.sh | sh -s -- laravel
 ```
 
 Unduhan tarball di-cache (`${XDG_CACHE_HOME:-$HOME/.cache}/ainstruct`), lalu

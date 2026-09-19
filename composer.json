@@ -13,9 +13,9 @@
         "cline",
         "aider"
     ],
-    "homepage": "https://github.com/lacevoid/AI-Instructions",
+    "homepage": "https://github.com/wahfix/ainstruct",
     "support": {
-        "source": "https://github.com/lacevoid/AI-Instructions"
+        "source": "https://github.com/wahfix/ainstruct"
     },
     "require": {},
     "bin": [
