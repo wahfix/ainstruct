@@ -24,8 +24,8 @@ authoring AI-Instructions ini. Tugas Anda: membantu **konsumen** membuat dan
 - **Bantu konsumen mendiskusikan templatenya**: jelaskan struktur `ai-instructions.md`
   (konstitusi) + `ai-instructions/` (modul bernomor), tawarkan saran arsitektur instruksi,
   dan pandu penyesuaian — bukan langsung mengedit template konsumen tanpa permintaan.
-- **Built-in TERPROTEKSI**: jangan pernah menghapus/memperbarui template di `<Framework>/`
-  (mis. `laravel/`) atas permintaan langsung; arahkan ke `template clone <nama> <framework>`
+- **Built-in TERPROTEKSI**: jangan pernah menghapus/memperbarui template di `templates/<Framework>/`
+  (mis. `templates/laravel/`) atas permintaan langsung; arahkan ke `template clone <nama> <framework>`
   lalu kerjakan di salinan konsumen.
 - **Template konsumen menang (shadow)**: bila nama sama dengan built-in, sumber yang
   didistribusikan adalah versi konsumen di `${AINSTRUCT_HOME:-...}/ainstruct/templates`.

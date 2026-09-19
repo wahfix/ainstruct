@@ -17,7 +17,7 @@ dan siklus hidup instruksi.
 
 ## Repo Ini Bukan Tempat Distribusi
 
-`setup-ai-rules.sh` menjalankan distribusi ke **arah `pwd`** (direktori tempat script
+`bin/setup-ai-rules.sh` (alias `ainstruct`) menjalankan distribusi ke **arah `pwd`** (direktori tempat script
 dieksekusi). Menjalankannya di repo ini akan menimpa `AGENTS.md` (self-instruction arsitek)
 dan memunculkan artefak distribusi (`CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `ai-instructions/`,
 dll.) di root dengan isi hasil-generate. **Itu KESALAHAN KRITIS — KEGAGALAN TOTAL.**
@@ -30,25 +30,27 @@ AI-Instructions/
 ├── AGENTS.md            ← Self-instruction arsitek (peran, larangan, aturan git)
 ├── ARCHITECT-GUIDE.md   ← Playbook (wajib dibaca penuh sebelum bekerja)
 ├── VISION.md            ← Visi meta: mesin adaptif tiga lapisan (artefak→pabrik→adaptif)
-├── setup-ai-rules.sh    ← Script distribusi (HANYA untuk root proyek konsumen)
+├── bin/                 ← CLI & distribusi: ainstruct, setup-ai-rules.sh, install.sh
+├── scripts/             ← Quality gates: health-check, antislop-check, install-hooks
 ├── .gitignore           ← Mencegah artefak distribusi ter-commit ke repo ini
 ├── .opencode/           ← SELF-HOSTING: skill anti-slop + team-authoring + agent plenger
 ├── operator-memory/     ← MESIN ADAPTIF: skill + backup dua arah + bootstrap per-salinan
-└── laravel/             ← Template set instruksi (satu folder per framework/teknologi)
-    ├── ai-instructions.md            ← Konstitusi (entry point)
-    └── ai-instructions/
-        ├── 01-…-21-*.md                          ← Modul universal (01–11 + skill 13–21)
-        ├── 12-project-specific/                  ← Invarian per proyek
-        │   ├── lingusid.md                       ← Invarian proyek LingSID
-        │   └── canonical-snippets.md             ← Bank snippet verbatim + anchor
-        └── README.md
+└── templates/           ← Set instruksi per framework (satu folder per framework/teknologi)
+    └── laravel/
+        ├── ai-instructions.md            ← Konstitusi (entry point)
+        └── ai-instructions/
+            ├── 01-…-21-*.md                          ← Modul universal (01–11 + skill 13–21)
+            ├── 12-project-specific/                  ← Invarian per proyek
+            │   ├── lingusid.md                       ← Invarian proyek LingSID
+            │   └── canonical-snippets.md             ← Bank snippet verbatim + anchor
+            └── README.md
 ```
 
 ## Cara Kerja
 
-1. **Template set hidup di `<Framework>/`** (mis. `laravel/`) — ini sumber kebenaran untuk
-   editing. Isinya dibangun dari analisis nyata sebuah proyek referensi:
-   - `laravel/` berakar pada proyek **LingSID** (Laravel 12 + Inertia/Vue 3 + TypeScript):
+1. **Template set hidup di `templates/<Framework>/`** (mis. `templates/laravel/`) — ini sumber
+   kebenaran untuk editing. Isinya dibangun dari analisis nyata sebuah proyek referensi:
+   - `templates/laravel/` berakar pada proyek **LingSID** (Laravel 12 + Inertia/Vue 3 + TypeScript):
      aturan arsitektur, coding standards, naming, testing, security, git, tools, quality gates
      semuanya berbukti dari kode nyata proyek.
    - `canonical-snippets.md` menampung potongan kode **verbatim** + `path:line` sebagai
@@ -58,7 +60,9 @@ AI-Instructions/
 
    ```bash
    # di root proyek konsumen (mis. /home/ubuntu/Project/WahyuLingu/lingusid)
-   ./setup-ai-rules.sh laravel
+   ainstruct laravel
+   # atau langsung dari salinan repo ini:
+   ./bin/setup-ai-rules.sh laravel
    ```
 
    Script menyalin konstitusi ke `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
@@ -89,23 +93,24 @@ AI-Instructions/
 4. **Master dapat di-custom**: script membuat `ai-instructions/master/` di proyek konsumen
    dan TIDAK menimpanya bila sudah ada — spesialisasi proyek dilakukan di sana, lalu script
    dijalankan ulang untuk mendistribusikan versi custom.
-5. **Self-instruction arsitek mengadopsi aturan kualitas `laravel/`**: modul universal dari set
-   `laravel/ai-instructions/` yang berlaku untuk kerja AI apa pun (evidence-anchored authoring,
-   quality gates + senior self-review, edge probes authoring, change impact analysis, debug
-   disipliner, agent discipline, reproduce-everywhere) diadopsi ke `AGENTS.md` bagian 5 dan
-   di-enforce lewat pre-commit hook + CI (`scripts/health-check.sh`, markdownlint, smoke test).
+5. **Self-instruction arsitek mengadopsi aturan kualitas `templates/laravel/`**: modul universal
+   dari set `templates/laravel/ai-instructions/` yang berlaku untuk kerja AI apa pun
+   (evidence-anchored authoring, quality gates + senior self-review, edge probes authoring,
+   change impact analysis, debug disipliner, agent discipline, reproduce-everywhere) diadopsi
+   ke `AGENTS.md` bagian 5 dan di-enforce lewat pre-commit hook + CI (`scripts/health-check.sh`,
+   markdownlint, smoke test).
 
 ## Reset & Wipe di Proyek Konsumen
 
-`setup-ai-rules.sh` juga mendukung dua perintah untuk mengelola state instruksi **di
+`bin/setup-ai-rules.sh` (alias `ainstruct`) juga mendukung dua perintah untuk mengelola state instruksi **di
 proyek konsumen** (dieksekusi dari root proyek konsumen, arah `pwd`):
 
 - **Reset ke default** — buang seluruh custom di `ai-instructions/master/`, bangun ulang
   dari template framework, lalu distribusikan ulang. Sama dengan alur manual
-  `rm -rf ai-instructions/master && ./setup-ai-rules.sh <framework>`:
+  `rm -rf ai-instructions/master && ainstruct <framework>`:
 
   ```bash
-  ./setup-ai-rules.sh reset laravel
+  ainstruct reset laravel
   ```
 
 - **Wipe** — hapus SEMUA artefak instruksi dari proyek konsumen: `AGENTS.md`, `CLAUDE.md`,
@@ -114,26 +119,26 @@ proyek konsumen** (dieksekusi dari root proyek konsumen, arah `pwd`):
   (termasuk `master/` hasil custom):
 
   ```bash
-  ./setup-ai-rules.sh wipe          # tanpa --force: diminta konfirmasi
-  ./setup-ai-rules.sh wipe --force  # untuk automation/CI tanpa prompt
+  ainstruct wipe          # tanpa --force: diminta konfirmasi
+  ainstruct wipe --force  # untuk automation/CI tanpa prompt
   ```
 
 Keduanya dijalankan dari root proyek konsumen — **bukan** dari repo authoring ini.
 
 ## Adaptor: curl | sh, Composer, npm/npx
 
-Repo ini menyediakan tiga adaptor agar `setup-ai-rules.sh` bisa dipakai langsung di
-**proyek konsumen** (arah `pwd`) tanpa menyalin repo secara manual. Semua adapter
+Repo ini menyediakan tiga adaptor agar `bin/setup-ai-rules.sh` (alias `ainstruct`) bisa dipakai
+langsung di **proyek konsumen** (arah `pwd`) tanpa menyalin repo secara manual. Semua adapter
 menjalankan fungsi yang sama: `distribute`, `reset`, `wipe`, `init`, `template`.
 
 ### 1. curl | sh (tanpa instalasi)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/wahfix/ainstruct/main/install.sh | sh -s -- laravel
+curl -fsSL https://raw.githubusercontent.com/wahfix/ainstruct/main/bin/install.sh | sh -s -- laravel
 ```
 
 Unduhan tarball di-cache (`${XDG_CACHE_HOME:-$HOME/.cache}/ainstruct`), lalu
-`setup-ai-rules.sh` dieksekusi dari cache terhadap direktori saat ini. Opsi:
+`bin/setup-ai-rules.sh` dieksekusi dari cache terhadap direktori saat ini. Opsi:
 `AINSTRUCT_SOURCE_URL` (sumber tarball), `AINSTRUCT_CACHE` (direktori cache),
 `AINSTRUCT_UPDATE=1` (paksa unduh ulang).
 
@@ -148,7 +153,7 @@ ainstruct wipe --force     # hapus semua artefak instruksi
 
 Paket `lace/ainstruct` memasang bin `ainstruct` (symlink `vendor/bin/ainstruct`
 → `bin/ainstruct`, yang me-resolve path akar paket lalu mendelegasikan ke
-`setup-ai-rules.sh`).
+`bin/setup-ai-rules.sh`).
 
 ### 3. npm / npx (scope `@lace`)
 
@@ -180,7 +185,7 @@ ainstruct init --template laravel --force   # paksa template, tanpa deteksi/konf
   dan mengarahkan ke `init --template <nama>` / `ainstruct <nama>`.
 - **`ainstruct-detect.txt`** adalah berkas opsional per template, format baris
   `<bobot>|<tipe>|<argumen>|<label>` — tipe `file`, `dir`, atau `grep`
-  (`<path>:<pola regex>`). Template `laravel/` sudah memuat detektornya (Laravel +
+  (`<path>:<pola regex>`). Template `templates/laravel/` sudah memuat detektornya (Laravel +
   Inertia/Vue 3 + TypeScript); `template create` membuat starter kosong yang bisa diisi.
 - Opsi `--force` dibutuhkan di lingkungan non-interaktif/CI untuk melewati konfirmasi.
 
@@ -188,7 +193,7 @@ ainstruct init --template laravel --force   # paksa template, tanpa deteksi/konf
 
 Konsumen dapat membuat/memiliki template sendiri secara instan — tanpa menunggu
 repo authoring menambah template — lalu menghapus/memperbaruinya lewat perintah.
-Template **built-in** (ship bersama paket, mis. `laravel/`) **TERPROTEKSI**:
+Template **built-in** (ship bersama paket, mis. `templates/laravel/`) **TERPROTEKSI**:
 tidak bisa dihapus atau diubah/diperbarui langsung; untuk menyesuaikannya, konsumen
 **wajib clone sebagai template miliknya** lalu mengedit salinannya.
 
@@ -247,8 +252,8 @@ Ikuti `ARCHITECT-GUIDE.md` secara penuh (ringkasannya):
 1. Baca playbook `ARCHITECT-GUIDE.md`.
 2. Eksplorasi repository target (protocol eksplorasi 7 fase, termasuk koleksi snippet kanonik).
 3. Analisis (coding style, peletakan file, model fitur, testing, error handling, dll.).
-4. Pelajari `laravel/` sebagai **reference bar** — target kualitas minimum (bagian 6D playbook).
-5. Buat folder `<Framework>/` dengan struktur konstitusi + modul 01–11 + skill kualitas 13–21 +
+4. Pelajari `templates/laravel/` sebagai **reference bar** — target kualitas minimum (bagian 6D playbook).
+5. Buat folder `templates/<Framework>/` dengan struktur konstitusi + modul 01–11 + skill kualitas 13–21 +
    `12-project-specific/`.
 6. Tulis dengan evidence anchors + snippet kanonik verbatim.
 7. Verifikasi diri (bagian 9 playbook).
@@ -270,7 +275,7 @@ Setiap set WAJIB memuat KLAUSA 1–5 (detail penuh di `ARCHITECT-GUIDE.md` bagia
 
 ## Larangan Mutlak (di Repo Ini)
 
-- **DILARANG** menjalankan `./setup-ai-rules.sh` di root repo ini.
+- **DILARANG** menjalankan `./bin/setup-ai-rules.sh` di root repo ini.
 - **DILARANG** men-commit artefak distribusi (AGENTS.md isi hasil-generate, CLAUDE.md,
   GEMINI.md, .cursorrules, .windsurfrules, .continuerules, .clinerules/, .cursor/rules/,
   .github/, .aider.conf.yml, ai-instructions/) ke repo ini.
@@ -289,9 +294,9 @@ Setiap set WAJIB memuat KLAUSA 1–5 (detail penuh di `ARCHITECT-GUIDE.md` bagia
 
 | Set | Status | Catatan |
 |-----|--------|---------|
-| `laravel/` | Aktif | Berakar pada LingSID; konstitusi + modul 01–21 + invariant proyek di `12-project-specific/lingusid.md` + bank snippet kanonik; memuat protokol MASTER_BUILD_SPECIFICATION. Self-instruction arsitek (`AGENTS.md` §5) mengadopsi aturan kualitas universal dari set ini. |
+| `templates/laravel/` | Aktif | Berakar pada LingSID; konstitusi + modul 01–21 + invariant proyek di `12-project-specific/lingusid.md` + bank snippet kanonik; memuat protokol MASTER_BUILD_SPECIFICATION. Self-instruction arsitek (`AGENTS.md` §5) mengadopsi aturan kualitas universal dari set ini. |
 | `operator-memory/` | Aktif | **MESIN ADAPTIF (lapisan 3)**: skill `operator-memory` + memori live (`~/.config/opencode/...`) + script backup dua arah, restore, dan bootstrap (`operator-memory/`) — setiap salinan repo me-bootstrap operatornya masing-masing ke repo privat GitHub. |
-| `java/`, `react/` | Direncanakan | Didukung script (coming soon), folder belum dibuat |
+| `templates/java/`, `templates/react/` | Direncanakan | Didukung script (coming soon), folder belum dibuat |
 
 > **Bukan template** — komponen sistem repo ini: tim development multi-agent (protokol internal
 > authoring via skill `team-authoring` + subagent `.opencode/agent/`) dan filter anti-AI-slop

@@ -6,7 +6,7 @@
 > yang sudah jadi.
 >
 > Repository AI-Instructions ini adalah **bengkel authoring**, BUKAN proyek konsumen.
-> DILARANG KERAS menjalankan `./setup-ai-rules.sh` di root repository ini — script hanya
+> DILARANG KERAS menjalankan `./bin/setup-ai-rules.sh` di root repository ini — script hanya
 > untuk root proyek konsumen; menjalankannya di sini menimpa AGENTS.md (self-instruction)
 > dan memunculkan artefak distribusi di root dengan isi hasil generate = **KEGAGALAN TOTAL**
 > (selengkapnya di bagian 10 & 11).
@@ -42,7 +42,7 @@ dapat mengimplementasikan fitur yang belum pernah ada sehingga kodenya tampak di
 tim engineering yang sama yang membuat repository.**
 
 **REFERENCE BAR**: tingkat kompleksitas, kedetilan, dan kelengkapan set hasil generasi
-WAJIB setara atau lebih tinggi dari set acuan `laravel/` (konstitusi lengkap, seluruh modul
+WAJIB setara atau lebih tinggi dari set acuan `templates/laravel/` (konstitusi lengkap, seluruh modul
 terisi actionable + evidence anchor, invariants project-specific, bank snippet kanonik,
 quality gates + gates proyek, referensi cepat). Set yang lebih tipis / lebih generik dari
 acuan = BELUM selesai. Detail penilaiannya di bagian 6D.
@@ -52,9 +52,9 @@ acuan = BELUM selesai. Detail penilaiannya di bagian 6D.
 Repo AI-Instructions adalah **mesin adaptif (proyek meta)**, bukan sekadar bengkel
 authoring. Misi Anda mencakup tiga lapisan (visi penuh: `VISION.md` di root):
 
-1. **L1 — Artefak**: memproduksi/memelihara set instruksi (`laravel/`, ...).
+1. **L1 — Artefak**: memproduksi/memelihara set instruksi (`templates/laravel/`, ...).
 2. **L2 — Pabrik**: memelihara mesin yang memproduksi & menguji L1 — `AGENTS.md`,
-   `ARCHITECT-GUIDE.md`, `setup-ai-rules.sh`, `scripts/health-check.sh`, CI.
+   `ARCHITECT-GUIDE.md`, `bin/setup-ai-rules.sh`, `scripts/health-check.sh`, CI.
 3. **L3 — Mesin adaptif**: memelihara `operator-memory/` — mekanisme per-salinan yang
    membuat setiap salinan repo me-bootstrap persona operatornya sendiri (skill + memori
    di `~/.config/opencode/...` + repo privat GitHub + sinkronisasi dua arah via
@@ -75,9 +75,10 @@ Anda bekerja di dalam folder root system instruksi AI:
 /home/ubuntu/Project/WahFix/AI-Instructions/
 ├── AGENTS.md                   ← Self-instruction Anda (pointer ke playbook + larangan)
 ├── ARCHITECT-GUIDE.md          ← File ini (playbook Anda)
-├── setup-ai-rules.sh           ← Script distribusi (HANYA untuk root proyek konsumen — DILARANG dijalankan di repo ini)
+├── bin/                        ← CLI & distribusi: ainstruct, setup-ai-rules.sh, install.sh (HANYA proyek konsumen)
+├── scripts/                    ← Quality gates (health-check, antislop-check, install-hooks)
 ├── .gitignore                  ← Mencegah artefak distribusi ter-commit
-└── <Framework>/                ← Satu folder per repository/framework yang telah dianalisis
+└── templates/<Framework>/      ← Satu folder per repository/framework yang telah dianalisis
     ├── ai-instructions.md      ← Konstitusi (entry point)
     └── ai-instructions/
         ├── 01-governance.md
@@ -96,11 +97,11 @@ Anda bekerja di dalam folder root system instruksi AI:
         └── README.md
 ```
 
-Setiap repository target dipetakan ke **satu folder baru** (contoh: `laravel/`, `React/`,
-`Spring/`).
+Setiap repository target dipetakan ke **satu folder baru** (contoh: `templates/laravel/`,
+`templates/React/`, `templates/Spring/`).
 
-Folder **`laravel/`** adalah **exemplar acuan** — standar struktur & kualitas minimum untuk
-set berikutnya. Saat authoring, pelajari seluruh modul `laravel/ai-instructions/*`
+Folder **`templates/laravel/`** adalah **exemplar acuan** — standar struktur & kualitas minimum untuk
+set berikutnya. Saat authoring, pelajari seluruh modul `templates/laravel/ai-instructions/*`
 (termasuk `12-project-specific/*` dan `canonical-snippets.md`) sebagai bahan referensi
 tingkat presisi, gaya bahasa, dan pola bukti (detail di bagian 6D). Repo ini BUKAN proyek
 konsumen: tidak ada artefak distribusi (`AGENTS.md` isi hasil-generate, `CLAUDE.md`,
@@ -349,11 +350,11 @@ baca spec sebelum kode), `10-quality-gates.md`, `11-forbidden-behavior.md`, dan 
 cepat. Klausa 1 adalah aturan perilaku Anda saat menulis; pelanggarannya = kegagalan total.
 Verifikasi kepatuhan klausa ini ada di bagian 9.
 
-Buat folder baru dengan nama **nama teknologi/framework repository target** (mis. `laravel/`), berisi:
+Buat folder baru dengan nama **nama teknologi/framework repository target** (mis. `templates/laravel/`), berisi:
 
 ### A. `ai-instructions.md` — Konstitusi (entry point)
 
-Ikuti struktur konstitusi yang ada di `laravel/ai-instructions.md` sebagai template:
+Ikuti struktur konstitusi yang ada di `templates/laravel/ai-instructions.md` sebagai template:
 
 - Header `# AI INSTRUCTION SYSTEM — CONSTITUTION`
 - Blok `[!CRITICAL]` protokol baca-sebelum-menulis.
@@ -378,13 +379,13 @@ kebenaran tunggal bagi agent masa depan pada repository tersebut.
 > **LARANGAN REFERENSI REPOSITORY CONTOH.** Semua materi — termasuk kata "template",
 > "contoh", "misal dari …", path, evidence anchor, dan contoh kode — pada output Anda
 > WAJIB berasal dari repository target. Anda DILARANG KERAS (MUST NOT) menggunakan atau
-> menyebut repository contoh (dalam hal ini folder `laravel/` atau repository asal lainnya)
+> menyebut repository contoh (dalam hal ini folder `templates/laravel/` atau repository asal lainnya)
 > di bagian manapun dari konstitusi/modul hasil generasi. Hanya kerangka struktur yang boleh
 > ditiru; isi dan seluruh rujukan WAJIB milik repository target.
 
 ### B. Folder `ai-instructions/` berisi modul bernomor
 
-Salin kerangka modul 01–11 + skill kualitas 13–21 + README dari `laravel/ai-instructions/`
+Salin kerangka modul 01–11 + skill kualitas 13–21 + README dari `templates/laravel/ai-instructions/`
 sebagai struktur awal, lalu **tulis ulang isi setiap modul** berdasarkan bukti repository target:
 
 | File | Isi |
@@ -471,8 +472,8 @@ yang saling melengkapi (lakukan keduanya):
 
 ### D. REFERENCE BAR — STANDAR MINIMUM KELENGKAPAN SET
 
-Saat authoring, tambahkan set `laravel/` sebagai **bahan referensi** ke dalam instruksi
-Anda sendiri: belajar/baca seluruh modul `laravel/ai-instructions/*` (01–11 dan 13–21), README,
+Saat authoring, tambahkan set `templates/laravel/` sebagai **bahan referensi** ke dalam instruksi
+Anda sendiri: belajar/baca seluruh modul `templates/laravel/ai-instructions/*` (01–11 dan 13–21), README,
 `12-project-specific/lingusid.md`, dan `12-project-specific/canonical-snippets.md` sebagai
 standar tingkat presisi, gaya bahasa, struktur tabel, dan pola bukti yang harus dicapai.
 
@@ -489,7 +490,7 @@ Set hasil generasi DIVERIFIKASI terhadap checklist kelengkapan berikut (semua WA
 - **Evidence anchors** di setiap aturan penting; tidak ada `path` yang dipalsukan.
 - **Distribusi yang benar** — ke proyek konsumen saja, bukan repo authoring ini (lihat 10 & 11).
 
-Set yang setelah diverifikasi masih "lebih tipis/generik" daripada acuan `laravel/` dianggap
+Set yang setelah diverifikasi masih "lebih tipis/generik" daripada acuan `templates/laravel/` dianggap
 BELUM SELESAI dan wajib diperkaya sebelum dianggap selesai.
 
 ---
@@ -577,7 +578,7 @@ Sebelum menyelesaikan, pastikan jawaban berikut semuanya YA:
 - **Protokol spec**: Klausa 5 tertulis eksplisit di konstitusi + modul 01/02/10/11 +
   referensi cepat? Alur "file spec tidak ada → STOP + tanya operator mendetil → buat file
   lengkap → baru kode" terdokumentasi jelas?
-- **Reference bar**: Set setara/lebih tinggi dari `laravel/`? Bank snippet terpusat ada
+- **Reference bar**: Set setara/lebih tinggi dari `templates/laravel/`? Bank snippet terpusat ada
   dan berisi cakupan minimum (6C)? Set tidak lebih tipis/generik dari acuan?
 - **Repo authoring bersih**: Tidak ada artefak distribusi (AGENTS.md isi hasil-generate,
   CLAUDE.md, GEMINI.md, .cursorrules, ai-instructions/, dll.) yang ter-commit di repo
@@ -599,30 +600,30 @@ Setelah set instruksi selesai, WAJIB:
    `/home/ubuntu/Project/WahyuLingu/lingusid`), BUKAN dari root repo AI-Instructions ini:
 
    ```bash
-   ./setup-ai-rules.sh <nama-folder>
+   ainstruct <nama-folder>
    ```
 
-   Contoh: `./setup-ai-rules.sh laravel`.
+   Contoh: `ainstruct laravel` (atau `./bin/setup-ai-rules.sh laravel` dari salinan repo ini).
    Ini mendistribusikan `ai-instructions.md` ke `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
    `.github/copilot-instructions.md`, `.cursorrules`, `.cursor/rules/...`, `.windsurfrules`,
    `.clinerules/...`, `.continuerules`, `.aider.conf.yml`, `opencode.json` (opencode —
    default AI untuk pekerjaan, `default_agent: "build"` + instruksi dari `AGENTS.md`)
    — semua di **proyek konsumen**.
 
-   Adaptor eksekusi yang setara tersedia: `install.sh` (curl | sh, mengunduh tarball ke
-   cache lalu menjalankan `setup-ai-rules.sh` terhadap pwd), `bin/ainstruct` (bin paket
+   Adaptor eksekusi yang setara tersedia: `bin/install.sh` (curl | sh, mengunduh tarball ke
+   cache lalu menjalankan `bin/setup-ai-rules.sh` terhadap pwd), `bin/ainstruct` (bin paket
    `lace/ainstruct` untuk Composer dan `@lace/ainstruct` untuk npm/npx). Ketiganya
    mendukung subcommand `distribute`, `reset`, `wipe`, dan `template`. Rincian di
    README `Adaptor: curl | sh, Composer, npm/npx`.
 
    Template milik **konsumen** dikelola via `template` (list/create/clone/update/
    delete/path) dan hidup di `${AINSTRUCT_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ainstruct}/templates`,
-   menang atas built-in bila nama sama. Template built-in repo ini (`laravel/`) TERPROTEKSI:
-   konsumen tidak bisa menghapus/memperbaruinya langsung — customisasi wajib lewat
+   menang atas built-in bila nama sama. Template built-in repo ini (`templates/laravel/`)
+   TERPROTEKSI: konsumen tidak bisa menghapus/memperbaruinya langsung — customisasi wajib lewat
    `template clone`. Rincian di README `Template Manager: Template Milik Konsumen`.
 
    > [!CRITICAL]
-   > **DILARANG KERAS menjalankan `./setup-ai-rules.sh` di root repository AI-Instructions
+   > **DILARANG KERAS menjalankan `./bin/setup-ai-rules.sh` di root repository AI-Instructions
    > ini.** Script dengan target root repo authoring menimpa instruksi khusus AI repositori ini
    > (AGENTS.md, dan memunculkan artefak distribusi di root) dengan isi hasil generate
    > = **KESALAHAN KRITIS, KEGAGALAN TOTAL**. Script ini hanya untuk root **proyek
@@ -631,20 +632,20 @@ Setelah set instruksi selesai, WAJIB:
 3. **Laporkan hasil** ke user: folder yang dibuat, struktur file, dan langkah distribusi.
 
 4. **Perbarui set yang sudah ada** (bukan generate baru):
-   - Template di `<Framework>/ai-instructions*` adalah **sumber kebenaran** untuk editing.
+   - Template di `templates/<Framework>/ai-instructions*` adalah **sumber kebenaran** untuk editing.
    - Script TIDAK menimpa `ai-instructions/master/` bila sudah ada — hapus/master dulu
      agar master disinkronkan ulang:
 
      ```bash
      rm -rf ai-instructions/master
-     ./setup-ai-rules.sh <nama-folder>
+     ainstruct <nama-folder>
      ```
 
    - Alur di atas otomatis oleh subcommand `reset` (menghapus `ai-instructions/master/`
      lalu distribusi ulang dari template):
 
      ```bash
-     ./setup-ai-rules.sh reset <nama-folder>
+     ainstruct reset <nama-folder>
      ```
 
    - Subcommand `wipe` menghapus seluruh artefak hasil distribusi dari proyek konsumen
@@ -653,8 +654,8 @@ Setelah set instruksi selesai, WAJIB:
      ai-instructions/ termasuk master/) — konfirmasi dulu kecuali diberi `--force`:
 
      ```bash
-     ./setup-ai-rules.sh wipe            # konfirmasi dulu
-     ./setup-ai-rules.sh wipe --force    # tanpa prompt (CI/automation)
+     ainstruct wipe            # konfirmasi dulu
+     ainstruct wipe --force    # tanpa prompt (CI/automation)
      ```
 
    - Verifikasi konsistensi: template ↔ master ↔ hasil distribusi harus **byte-identical**
@@ -683,7 +684,7 @@ Setelah set instruksi selesai, WAJIB:
 - **PREFER** pola berulang & bukti struktural untuk identifikasi pola.
 - **PREFER** implementasi tetangga sebagai contoh utama.
 - **JANGAN** memparafrase snippet kanonik — salin verbatim dan sertakan evidence anchor.
-- **DILARANG KERAS menjalankan `./setup-ai-rules.sh` di root repository AI-Instructions ini**
+- **DILARANG KERAS menjalankan `./bin/setup-ai-rules.sh` di root repository AI-Instructions ini**
   (bengkel authoring). Menjalankannya di sini menimpa self-instruction repo (AGENTS.md) dan
   memunculkan `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, `.continuerules`,
   `.clinerules/`, `.cursor/rules/`, `.github/`, `.aider.conf.yml`, `ai-instructions/` di root
@@ -694,7 +695,7 @@ Setelah set instruksi selesai, WAJIB:
   `.clinerules/`, `.cursor/rules/`, `.github/copilot-instructions.md`, `.aider.conf.yml`,
   `ai-instructions/`) ke repository AI-Instructions ini. Artefak itu milik proyek konsumen.
   Bila menemukan artefak di root repo authoring → hapus, jangan di-commit.
-- **PREFER** rujuk set `laravel/` sebagai bahan referensi saat authoring set baru (bagian 6D).
+- **PREFER** rujuk set `templates/laravel/` sebagai bahan referensi saat authoring set baru (bagian 6D).
 - **TARGET**: agent masa depan harus menghabiskan kecerdasannya untuk memecahkan masalah
   bisnis/teknis yang diminta, bukan memutuskan bagaimana repository ini harus distruktur.
 
@@ -708,11 +709,11 @@ Saat user berkata sekitar seperti: *"buat set instruksi untuk repo <X> ini"* ata
 1. Load playbook ini.
 2. Eksplorasi repository target (bagian 3 — Protocol Eksplorasi, termasuk Phase 7: koleksi snippet & signature kanonik).
 3. Lakukan analisis (bagian 4).
-4. Pelajari set `laravel/` sebagai bahan referensi kelengkapan & presisi (bagian 6D).
-5. Buat folder baru `<Framework>/` dengan struktur bagian 6.
+4. Pelajari set `templates/laravel/` sebagai bahan referensi kelengkapan & presisi (bagian 6D).
+5. Buat folder baru `templates/<Framework>/` dengan struktur bagian 6.
 6. Tulis konstitusi + modul dengan evidence anchors dan snippet kanonik nyata.
 7. Verifikasi diri (bagian 9).
-8. Jalankan `./setup-ai-rules.sh <Framework>` dari **root proyek konsumen** (bukan repo
+8. Jalankan `ainstruct <Framework>` dari **root proyek konsumen** (bukan repo
    authoring ini — lihat bagian 10 & 11).
 9. Laporkan ke user dengan ringkasan Artifact A + B.
 
@@ -723,6 +724,6 @@ Saat user berkata sekitar seperti: *"buat set instruksi untuk repo <X> ini"* ata
 > = KEGAGALAN TOTAL (Klausa 1). Set instruksi yang tidak memuat Klausa 2–5 (dilarang kerja
 > di main, commit message ringkas, inisiasi git, protokol MASTER_BUILD_SPECIFICATION)
 > = KEGAGALAN TOTAL. Set yang tidak memenuhi REFERENCE BAR bagian 6D (termasuk bank snippet
-> terpusat) = BELUM SELESAI. Menjalankan `./setup-ai-rules.sh` di root repo authoring ini
+> terpusat) = BELUM SELESAI. Menjalankan `./bin/setup-ai-rules.sh` di root repo authoring ini
 > atau men-commit artefak distribusinya ke repo ini = KEGAGALAN TOTAL. Kepatuhan penuh pada
 > playbook ini adalah SYARAT ABSOLUT.

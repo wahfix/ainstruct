@@ -9,12 +9,12 @@
 
 ```
 LAPISAN 1 — ARTEFAK (yang dikonsumsi proyek konsumen)
-└── laravel/         set instruksi berakar pada LingSID (konstitusi + modul 01–21)
+└── templates/laravel/   set instruksi berakar pada LingSID (konstitusi + modul 01–21)
 
 LAPISAN 2 — PABRIK (yang memproduksi & menjaga lapisan 1)
 ├── AGENTS.md        self-instruction arsitek (peran, larangan, aturan git)
 ├── ARCHITECT-GUIDE.md   playbook authoring (wajib dibaca penuh)
-├── setup-ai-rules.sh   script distribusi/reset/wipe/template (HANYA di proyek konsumen)
+├── bin/             ainstruct + setup-ai-rules.sh + install.sh (HANYA di proyek konsumen)
 ├── scripts/         health-check, install-hooks
 └── .github/workflows/  CI: markdownlint, shellcheck, integrity, smoke test, meta
 
@@ -37,7 +37,7 @@ LAPISAN 3 — MESIN ADAPTIF (yang membuat setiap salinan menjadi milik operatorn
 Aturan yang repo ini tulis untuk AI pada umumnya **berlaku untuk kerja repo ini
 sendiri**: evidence-anchored authoring, quality gates sebelum "selesai", edge
 probes, change impact analysis, debugging disipliner, agent discipline, dan
-reproduce-everywhere (diadopsi dari `laravel/ai-instructions/` ke `AGENTS.md` §5).
+reproduce-everywhere (diadopsi dari `templates/laravel/ai-instructions/` ke `AGENTS.md` §5).
 
 Artinya: **mesin ini memproduksi instruksi menggunakan standar yang sama dengan
 instruksi yang diproduksinya.** Tidak ada dua standar — untuk konsumen dan untuk
@@ -47,15 +47,15 @@ diri sendiri.
 
 ```
 DIPRODUKSI → DIUJI → DIDISTRIBUSIKAN → DIADAPTASI → DIINGAT
-   authoring    health-check    setup-ai-rules.sh   master/ custom   operator-memory
-                + CI            (proyek konsumen)    per proyek      (per salinan, per operator)
+   authoring    health-check    bin/setup-ai-rules.sh   master/ custom   operator-memory
+                + CI            (proyek konsumen)        per proyek      (per salinan, per operator)
 ```
 
-1. **Diproduksi** — set instruksi dibuat/diperbarui di `<Framework>/` (L1) memakai
+1. **Diproduksi** — set instruksi dibuat/diperbarui di `templates/<Framework>/` (L1) memakai
    playbook `ARCHITECT-GUIDE.md` (L2).
 2. **Diuji** — setiap perubahan harus lolos `scripts/health-check.sh`, markdownlint,
    shellcheck, dan smoke test distribusi (L2; CI di `.github/workflows/`).
-3. **Didistribusikan** — `setup-ai-rules.sh` / adaptor (curl|sh, Composer, npm)
+3. **Didistribusikan** — `bin/setup-ai-rules.sh` / adaptor (curl|sh, Composer, npm)
    menebar set ke proyek konsumen; konsumen bisa men-custom via
    `ai-instructions/master/` atau `template` miliknya.
 4. **Diadaptasi** — setiap fondasi itu hidup di banyak lingkungan; nilai akhirnya
@@ -72,7 +72,7 @@ DIPRODUKSI → DIUJI → DIDISTRIBUSIKAN → DIADAPTASI → DIINGAT
   semua salinan; memori & kepribadian berbeda per operator. Tidak ada data operator
   yang saling menimpa — `operator-memory/backup.sh` selalu menarik lalu menggabungkan.
 - **Batasan tetap berlaku**: repo ini BUKAN proyek konsumen; artefak distribusi
-  tidak pernah di-commit ke sini; `main` dilindungi (lewat PR); `setup-ai-rules.sh`
+  tidak pernah di-commit ke sini; `main` dilindungi (lewat PR); `bin/setup-ai-rules.sh`
   hanya dijalankan di root proyek konsumen.
 - **Kejujuran skala**: lapisan meta adalah investasi — nilainya terukur dari
   seberapa presisi instruksi yang diproduksi dan seberapa mulus adaptasi per operator.

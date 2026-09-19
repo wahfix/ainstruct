@@ -3,7 +3,7 @@
 # AINSTRUCT — curl | sh installer / runner
 # ============================================================================
 # Mengunduh tarball repo AI-Instructions ke cache lokal, lalu mengeksekusi
-# setup-ai-rules.sh dari cache terhadap pwd (proyek konsumen). Tidak
+# bin/setup-ai-rules.sh dari cache terhadap pwd (proyek konsumen). Tidak
 # menginstal apa pun ke sistem.
 #
 # Penggunaan:
@@ -44,8 +44,11 @@ if [ "$missing" -ne 0 ]; then
     exit 1
 fi
 
+# Entry script live di bin/setup-ai-rules.sh dalam tarball/cache.
+SETUP_REL="bin/setup-ai-rules.sh"
+
 need_fetch=0
-if [ ! -f "$CACHE_DIR/setup-ai-rules.sh" ]; then
+if [ ! -f "$CACHE_DIR/$SETUP_REL" ]; then
     need_fetch=1
 fi
 if [ "$UPDATE" = "1" ]; then
@@ -78,7 +81,7 @@ if [ "$need_fetch" = "1" ]; then
 
     # Fallback: bila isi masih di dalam satu top-level dir (mis. tar tanpa
     # --strip-components), naikkan isinya ke akar cache.
-    if [ ! -f "$CACHE_DIR/setup-ai-rules.sh" ]; then
+    if [ ! -f "$CACHE_DIR/$SETUP_REL" ]; then
         topdir=""
         for entry in "$CACHE_DIR"/*/; do
             [ -d "$entry" ] || continue
@@ -95,12 +98,12 @@ if [ "$need_fetch" = "1" ]; then
         fi
     fi
 
-    if [ ! -f "$CACHE_DIR/setup-ai-rules.sh" ]; then
-        echo "error: tarball tidak berisi setup-ai-rules.sh (URL sumber salah?)" >&2
+    if [ ! -f "$CACHE_DIR/$SETUP_REL" ]; then
+        echo "error: tarball tidak berisi $SETUP_REL (URL sumber salah?)" >&2
         exit 1
     fi
 
     echo "→ Cache: $CACHE_DIR" >&2
 fi
 
-exec "$CACHE_DIR/setup-ai-rules.sh" "$@"
+exec "$CACHE_DIR/$SETUP_REL" "$@"

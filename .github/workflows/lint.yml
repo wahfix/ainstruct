@@ -25,5 +25,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - run: shellcheck --severity=warning scripts/health-check.sh scripts/antislop-check.sh scripts/install-hooks.sh .githooks/pre-commit setup-ai-rules.sh bin/ainstruct install.sh
+      - run: shellcheck --severity=warning scripts/health-check.sh scripts/antislop-check.sh scripts/install-hooks.sh .githooks/pre-commit bin/setup-ai-rules.sh bin/ainstruct bin/install.sh
         name: shellcheck shell scripts
