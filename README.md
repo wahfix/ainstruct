@@ -4,6 +4,14 @@
   <img src="assets/logo.svg" alt="AI-INSTRUCTIONS — Instruction Architecture" width="340">
 </p>
 
+<p align="center">
+  <a href="https://packagist.org/packages/lace/ainstruct"><img src="https://img.shields.io/packagist/v/lace/ainstruct.svg" alt="Packagist Version"></a>
+  <a href="https://packagist.org/packages/lace/ainstruct"><img src="https://img.shields.io/packagist/dt/lace/ainstruct.svg" alt="Packagist Downloads"></a>
+  <a href="https://packagist.org/packages/lace/ainstruct"><img src="https://img.shields.io/packagist/php-v/lace/ainstruct.svg" alt="PHP Version"></a>
+  <a href="https://github.com/wahfix/ainstruct/actions"><img src="https://github.com/wahfix/ainstruct/workflows/tests/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/wahfix/ainstruct/actions"><img src="https://github.com/wahfix/ainstruct/workflows/lint/badge.svg" alt="Lint"></a>
+</p>
+
 **Repository Instruction Architect — mesin adaptif (proyek meta) pengelola set instruksi AI.**
 
 Repositori ini BUKAN proyek konsumen teknologi apa pun. Ini adalah **mesin adaptif**:
