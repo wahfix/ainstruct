@@ -37,10 +37,7 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct help <command>').'   # detail fungsi command/subcommand');
         $this->style()->blank();
         $this->style()->section('Available commands');
-
-        foreach ($this->commands() as $command) {
-            $this->commandLine($command['name'], $command['description']);
-        }
+        $this->tableTwoColumns('Command', 'Deskripsi', $this->commands());
 
         $this->style()->blank();
         $this->style()->bullet($this->style()->dim('Kontrak lama: ainstruct <framework> = distribute (mis. ainstruct laravel).'));
@@ -63,7 +60,12 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct <framework>').'   # bentuk pendek');
         $this->style()->blank();
         $this->style()->section('Argumen');
-        $this->style()->bullet($this->style()->cyan('<framework>').'   Nama template; custom konsumen menang atas built-in bila nama sama.');
+        $this->style()->table(
+            ['Argumen', 'Penjelasan'],
+            [
+                ['<framework>', 'Nama template; custom konsumen menang atas built-in bila nama sama.'],
+            ]
+        );
         $this->style()->blank();
         $this->style()->section('Contoh');
         $this->style()->bullet($this->style()->cyan('ainstruct laravel'));
@@ -84,9 +86,14 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct init [--template <nama>] [--dry-run]'));
         $this->style()->blank();
         $this->style()->section('Opsi');
-        $this->style()->bullet($this->style()->cyan('--template <nama>').'   Paksa template, lewati deteksi.');
-        $this->style()->bullet($this->style()->cyan('--dry-run').'   Laporkan hasil deteksi tanpa mengubah apa pun.');
-        $this->style()->bullet('--force diterima untuk keseragaman CLI; init tidak meminta konfirmasi.');
+        $this->style()->table(
+            ['Opsi', 'Penjelasan'],
+            [
+                ['--template <nama>', 'Paksa template, lewati deteksi.'],
+                ['--dry-run', 'Laporkan hasil deteksi tanpa mengubah apa pun.'],
+                ['--force', 'Diterima untuk keseragaman CLI; init tidak meminta konfirmasi.'],
+            ]
+        );
         $this->style()->blank();
         $this->style()->section('Contoh');
         $this->style()->bullet($this->style()->cyan('ainstruct init --dry-run'));
@@ -108,10 +115,21 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct status [--json]'));
         $this->style()->blank();
         $this->style()->section('Opsi');
-        $this->style()->bullet($this->style()->cyan('--json').'   Laporan JSON murni (tanpa header/ANSI) untuk automation/CI.');
+        $this->style()->table(
+            ['Opsi', 'Penjelasan'],
+            [
+                ['--json', 'Laporan JSON murni (tanpa header/ANSI) untuk automation/CI.'],
+            ]
+        );
         $this->style()->blank();
         $this->style()->section('Exit code');
-        $this->style()->bullet('0 = sehat (artefak lengkap & sinkron); 1 = ada masalah.');
+        $this->style()->table(
+            ['Kode', 'Arti'],
+            [
+                ['0', 'Sehat: artefak lengkap & sinkron dengan master.'],
+                ['1', 'Ada masalah (artefak hilang / berbeda dari master).'],
+            ]
+        );
         $this->style()->blank();
 
         return 0;
@@ -145,7 +163,12 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct wipe [--force]'));
         $this->style()->blank();
         $this->style()->section('Opsi');
-        $this->style()->bullet($this->style()->cyan('--force').'   Hapus tanpa konfirmasi (CI/automation).');
+        $this->style()->table(
+            ['Opsi', 'Penjelasan'],
+            [
+                ['--force', 'Hapus tanpa konfirmasi (CI/automation).'],
+            ]
+        );
         $this->style()->bullet('Di terminal interaktif: minta konfirmasi dulu; non-interaktif tanpa --force gagal (exit 1).');
         $this->style()->blank();
 
@@ -160,10 +183,7 @@ final class HelpCommand extends Command
         $this->style()->bullet('Built-in tidak bisa dihapus/diperbarui langsung; customisasi wajib lewat clone.');
         $this->style()->blank();
         $this->style()->section('Subcommands');
-
-        foreach ($this->templateSubcommands() as $command) {
-            $this->commandLine($command['name'], $command['description']);
-        }
+        $this->tableTwoColumns('Subcommand', 'Deskripsi', $this->templateSubcommands());
 
         $this->style()->blank();
         $this->style()->section('Contoh');
@@ -214,8 +234,14 @@ final class HelpCommand extends Command
         ];
     }
 
-    private function commandLine(string $name, string $description): void
+    /**
+     * @param  list<array{name: string, description: string}>  $rows
+     */
+    private function tableTwoColumns(string $leftHeader, string $rightHeader, array $rows): void
     {
-        $this->style()->bullet($this->style()->cyan(str_pad($name, 44)).' '.$description);
+        $this->style()->table(
+            [$leftHeader, $rightHeader],
+            array_map(fn (array $row): array => [$row['name'], $row['description']], $rows)
+        );
     }
 }
