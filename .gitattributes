@@ -5,7 +5,13 @@
 /.gitignore export-ignore
 /.githooks/ export-ignore
 /.markdownlint-cli2.yaml export-ignore
+/.opencode/ export-ignore
 /AGENTS.md export-ignore
 /ARCHITECT-GUIDE.md export-ignore
 /assets/ export-ignore
+/operator-memory/ export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml export-ignore
+/pint.json export-ignore
 /scripts/ export-ignore
+/tests/ export-ignore
