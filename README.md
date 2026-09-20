@@ -44,12 +44,20 @@ AI-Instructions/
 ├── .opencode/           ← SELF-HOSTING: skill anti-slop + team-authoring + agent plenger
 ├── operator-memory/     ← MESIN ADAPTIF: skill + backup dua arah + bootstrap per-salinan
 └── templates/           ← Set instruksi per framework (satu folder per framework/teknologi)
-    └── laravel/
+    ├── laravel/         ← Set exemplar (berakar pada LingSID; rincian di bawah)
+    │   ├── ai-instructions.md            ← Konstitusi (entry point)
+    │   └── ai-instructions/
+    │       ├── 01-…-21-*.md                          ← Modul universal (01–11 + skill 13–21)
+    │       ├── 12-project-specific/                  ← Invarian per proyek
+    │       │   ├── lingusid.md                       ← Invarian proyek LingSID
+    │       │   └── canonical-snippets.md             ← Bank snippet verbatim + anchor
+    │       └── README.md
+    └── vanilla-php/     ← Set PHP vanilla (konstitusi + modul 01–21 + 12-project-specific/)
         ├── ai-instructions.md            ← Konstitusi (entry point)
         └── ai-instructions/
             ├── 01-…-21-*.md                          ← Modul universal (01–11 + skill 13–21)
-            ├── 12-project-specific/                  ← Invarian per proyek
-            │   ├── lingusid.md                       ← Invarian proyek LingSID
+            ├── 12-project-specific/                  ← Kanonik template + bank snippet
+            │   ├── template-baseline.md              ← Keputusan kanonik template vanilla-php
             │   └── canonical-snippets.md             ← Bank snippet verbatim + anchor
             └── README.md
 ```
@@ -200,8 +208,9 @@ ainstruct init --template laravel --force   # paksa template, tanpa deteksi/konf
   dan mengarahkan ke `init --template <nama>` / `ainstruct <nama>`.
 - **`ainstruct-detect.txt`** adalah berkas opsional per template, format baris
   `<bobot>|<tipe>|<argumen>|<label>` — tipe `file`, `dir`, atau `grep`
-  (`<path>:<pola regex>`). Template `templates/laravel/` sudah memuat detektornya (Laravel +
-  Inertia/Vue 3 + TypeScript); `template create` membuat starter kosong yang bisa diisi.
+  (`<path>:<pola regex>`). Template `templates/laravel/` (Laravel + Inertia/Vue 3 + TypeScript)
+  dan `templates/vanilla-php/` (PHP vanilla + Composer PSR-4 + PHPUnit/PHPStan) sudah memuat
+  detektornya; `template create` membuat starter kosong yang bisa diisi.
 - Opsi `--force` dibutuhkan di lingkungan non-interaktif/CI untuk melewati konfirmasi.
 
 ## Template Manager: Template Milik Konsumen
@@ -310,6 +319,7 @@ Setiap set WAJIB memuat KLAUSA 1–5 (detail penuh di `ARCHITECT-GUIDE.md` bagia
 | Set | Status | Catatan |
 |-----|--------|---------|
 | `templates/laravel/` | Aktif | Berakar pada LingSID; konstitusi + modul 01–21 + invariant proyek di `12-project-specific/lingusid.md` + bank snippet kanonik; memuat protokol MASTER_BUILD_SPECIFICATION. Self-instruction arsitek (`AGENTS.md` §5) mengadopsi aturan kualitas universal dari set ini. |
+| `templates/vanilla-php/` | Aktif | Set PHP vanilla (konstitusi + modul 01–21 + kanonik template di `12-project-specific/template-baseline.md` + bank snippet kanonik) + detektor `ainstruct-detect.txt`; masuk pada rilis v0.2.5. |
 | `operator-memory/` | Aktif | **MESIN ADAPTIF (lapisan 3)**: skill `operator-memory` + memori live (`~/.config/opencode/...`) + script backup dua arah, restore, dan bootstrap (`operator-memory/`) — setiap salinan repo me-bootstrap operatornya masing-masing ke repo privat GitHub. |
 | `templates/java/`, `templates/react/` | Direncanakan | Didukung script (coming soon), folder belum dibuat |
 
