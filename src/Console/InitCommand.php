@@ -20,7 +20,7 @@ final class InitCommand extends Command
 
     public function handle(Input $input): int
     {
-        $this->header();
+        $this->header('Deteksi stack & distribusi otomatis');
 
         $force = $input->hasFlag('--force');
         $dryRun = $input->hasFlag('--dry-run');
@@ -39,7 +39,8 @@ final class InitCommand extends Command
                 return 1;
             }
 
-            $this->line('👉 Mode paksa: memakai template '.$this->green($templateName).' (diabaikan: deteksi otomatis).');
+            $this->style()->notice('Mode paksa: memakai template '.$this->style()->green($templateName).', deteksi otomatis diabaikan.');
+            $this->style()->blank();
         } else {
             $detected = [];
 
@@ -52,9 +53,9 @@ final class InitCommand extends Command
             }
 
             if ($detected === []) {
-                $this->line($this->yellow('📭 Tidak ada sinyal teknologi terdeteksi di '.$projectDir));
-                $this->line('   Proyek belum terdeteksi — paksa dengan --template <nama>, atau lihat template list.');
-                $this->line();
+                $this->style()->warn('Tidak ada sinyal teknologi terdeteksi di '.$projectDir);
+                $this->style()->bullet('Paksa dengan '.$this->style()->cyan('--template <nama>').', atau lihat '.$this->style()->cyan('template list').'.');
+                $this->style()->blank();
 
                 return 1;
             }
@@ -73,8 +74,8 @@ final class InitCommand extends Command
         }
 
         if ($dryRun) {
-            $this->line($this->yellow('🔎 Dry-run: tidak ada perubahan. Distribusi akan memakai: '.$chosen->templateName));
-            $this->line();
+            $this->style()->notice('Dry-run: tidak ada perubahan. Distribusi akan memakai '.$chosen->templateName);
+            $this->style()->blank();
 
             return 0;
         }
@@ -89,7 +90,7 @@ final class InitCommand extends Command
 
             return 1;
         } catch (ValidationException $e) {
-            $this->line($this->red('❌ '.$e->getMessage()));
+            $this->style()->error($e->getMessage());
 
             return 1;
         }
@@ -105,27 +106,30 @@ final class InitCommand extends Command
      */
     private function renderDetectionTable(array $detected, DetectedStack $best): void
     {
-        $this->line('🔍 Deteksi teknologi di: '.getcwd() ?: '.');
-        $this->line(sprintf('  %-18s %-10s %6s  %s', 'TEMPLATE', 'KEYAKINAN', 'SKOR', 'SINYAL COCOK'));
-        $this->line('  '.str_repeat('-', 66));
-        $this->line();
+        $this->style()->info('Deteksi teknologi di '.(getcwd() ?: '.'));
 
-        foreach ($detected as $stack) {
-            $line = sprintf(
-                '  %-18s %-10s %6d  %s',
+        $headers = ['TEMPLATE', 'KEYAKINAN', 'SKOR', 'SINYAL'];
+
+        // Cell polos; table yang menangani highlight hijau (hindari wrap ganda).
+        $rows = array_map(
+            fn (DetectedStack $stack): array => [
                 $stack->templateName,
                 $stack->confidence->value,
-                $stack->score,
-                implode(', ', $stack->signals)
-            );
+                (string) $stack->score,
+                implode(', ', $stack->signals),
+            ],
+            $detected
+        );
 
+        $highlight = null;
+
+        foreach ($detected as $index => $stack) {
             if ($stack === $best) {
-                $this->line($this->green($line.' ★ terpilih'));
-            } else {
-                $this->line($line);
+                $highlight = $index;
             }
         }
 
-        $this->line();
+        $this->style()->table($headers, $rows, $highlight);
+        $this->style()->blank();
     }
 }

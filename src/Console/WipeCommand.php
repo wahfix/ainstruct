@@ -12,26 +12,26 @@ final class WipeCommand extends Command
 
     public function handle(Input $input): int
     {
-        $this->header();
+        $this->header('Wipe instruksi AI');
 
         $force = $input->hasFlag('--force');
         $targetDir = getcwd() ?: '.';
 
-        $this->line('🧹 Wipe instruksi AI dari: '.$targetDir);
+        $this->style()->notice('Akan menghapus dari: '.$targetDir);
 
         foreach (WipeInstructionsAction::WIPE_FILES as $file) {
-            $this->line('  - '.$file);
+            $this->style()->bullet($this->style()->dim($file));
         }
 
         foreach (WipeInstructionsAction::WIPE_DIRECTORIES as $directory) {
-            $this->line('  - '.$directory.'/');
+            $this->style()->bullet($this->style()->dim($directory.'/'));
         }
 
-        $this->line();
+        $this->style()->blank();
 
         $confirmed = $this->confirmOrFail(
             $force,
-            'Hapus instruksi AI dari direktori ini? [y/N]',
+            'Hapus instruksi AI dari direktori ini?',
             'wipe'
         );
 
@@ -40,7 +40,7 @@ final class WipeCommand extends Command
         }
 
         if (! $confirmed) {
-            $this->line('Batal. Tidak ada yang dihapus.');
+            $this->style()->notice('Batal. Tidak ada yang dihapus.');
 
             return 1;
         }
@@ -51,23 +51,23 @@ final class WipeCommand extends Command
                 'target_dir' => $targetDir,
             ]);
         } catch (ValidationException $e) {
-            $this->line($this->red('❌ '.$e->getMessage()));
+            $this->style()->error($e->getMessage());
 
             return 1;
         }
 
         if ($result->files === []) {
-            $this->line($this->yellow('ℹ️  Tidak ada artefak instruksi yang ditemukan.'));
+            $this->style()->info('Tidak ada artefak instruksi yang ditemukan.');
 
             return 0;
         }
 
         foreach ($result->files as $label) {
-            $this->line('  '.$this->green('✓ removed: '.$label));
+            $this->style()->check('removed: '.$label);
         }
 
-        $this->line();
-        $this->line($this->green('✅ Wipe selesai. '.$result->count().' artefak dihapus.'));
+        $this->style()->blank();
+        $this->style()->success('Wipe selesai. '.$result->count().' artefak dihapus.');
 
         return 0;
     }

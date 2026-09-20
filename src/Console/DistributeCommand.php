@@ -17,7 +17,7 @@ final class DistributeCommand extends Command
 
     public function handle(Input $input): int
     {
-        $this->header();
+        $this->header('AI Instructions Distribution CLI');
 
         try {
             $result = $this->distributeInstructionsAction->handle([
@@ -29,7 +29,7 @@ final class DistributeCommand extends Command
 
             return 1;
         } catch (ValidationException $e) {
-            $this->line($this->red('❌ '.$e->getMessage()));
+            $this->style()->error($e->getMessage());
 
             return 1;
         }
