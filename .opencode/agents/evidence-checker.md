@@ -1,7 +1,7 @@
 ---
 description: Subagent tim authoring — verifikasi evidence anchors & edge probes: setiap backtick .md/.sh yang dirujuk resolve ke file nyata, modul yang disebut ada, tidak ada path/halusinasi. Use when the team must verify instruction references are real.
 mode: subagent
-color: info
+color: "#3b82f6"
 ---
 
 # Evidence Checker — Subagent Tim Authoring

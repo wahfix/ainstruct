@@ -15,12 +15,7 @@ opencode.json
 # Config authoring milik repo ini (default agent plenger + tim authoring) — WAJIB ter-track.
 !.opencode/
 !.opencode/opencode.json
-!.opencode/agent/
-!.opencode/agent/plenger.md
-!.opencode/agent/architect-reviewer.md
-!.opencode/agent/evidence-checker.md
-!.opencode/agent/quality-gate-runner.md
-!.opencode/agent/scope-consistency-reviewer.md
+!.opencode/agents/
 !.opencode/skills/
 !.opencode/skills/team-authoring/
 !.opencode/skills/team-authoring/SKILL.md

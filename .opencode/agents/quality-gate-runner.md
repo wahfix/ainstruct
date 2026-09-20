@@ -1,7 +1,7 @@
 ---
 description: Subagent tim authoring — menjalankan & melaporkan quality gates: health-check, markdownlint, PHP checks (php -l, pint, phpstan, phpunit), smoke test distribusi. Use when the team must verify all quality gates pass before marking work done.
 mode: subagent
-color: success
+color: "#22c55e"
 ---
 
 # Quality Gate Runner — Subagent Tim Authoring

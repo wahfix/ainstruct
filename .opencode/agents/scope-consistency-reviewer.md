@@ -1,7 +1,7 @@
 ---
 description: Subagent tim authoring — change impact & konsistensi: rename/restruktur modul harus memperbarui semua referensi; scope-stop; konsistensi istilah/nomor antar file. Use when the team must check change impact and consistency across instruction files.
 mode: subagent
-color: warning
+color: "#f59e0b"
 ---
 
 # Scope & Consistency Reviewer — Subagent Tim Authoring
