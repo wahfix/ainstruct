@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Repositories;
 
 use Lace\Ainstruct\Contracts\Repository\InstructionFileRepositoryContract;
@@ -16,6 +14,11 @@ final class InstructionFileRepository implements InstructionFileRepositoryContra
     ) {}
 
     public function fileExists(string $path): bool
+    {
+        return $this->fs->exists($path);
+    }
+
+    public function exists(string $path): bool
     {
         return $this->fs->exists($path);
     }
@@ -43,6 +46,29 @@ final class InstructionFileRepository implements InstructionFileRepositoryContra
     public function writeFile(string $path, string $content): void
     {
         $this->fs->writeFile($path, $content);
+    }
+
+    public function readFile(string $path): string
+    {
+        return (string) file_get_contents($path);
+    }
+
+    public function copyDirectory(string $from, string $to): void
+    {
+        $this->fs->makeDirectory(dirname($to));
+        $this->fs->copyDirectoryContents($from, $to);
+    }
+
+    public function remove(string $path): void
+    {
+        $this->fs->remove($path);
+    }
+
+    public function rmdirIfEmpty(string $dir): void
+    {
+        if ($this->fs->isDirectory($dir)) {
+            @rmdir($dir);
+        }
     }
 
     public function distributeCursorMdc(string $source, string $target, string $frameworkLower): void

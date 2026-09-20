@@ -4,13 +4,19 @@ namespace Lace\Ainstruct\Console;
 
 use Lace\Ainstruct\Abstractions\Commands\Command;
 use Lace\Ainstruct\Actions\Distribution\DistributeInstructionsAction;
+use Lace\Ainstruct\Actions\Distribution\ResetMasterAction;
 use Lace\Ainstruct\Contracts\Repository\TemplateRepositoryContract;
 use Lace\Ainstruct\Exceptions\TemplateNotFoundException;
 use Lace\Ainstruct\Exceptions\ValidationException;
 
-final class DistributeCommand extends Command
+/**
+ * `reset [<framework>]` — hapus master rules lalu distribusikan ulang
+ * (kontrak bash: reset_master diikuti jatuh ke alur distribute).
+ */
+final class ResetCommand extends Command
 {
     public function __construct(
+        private ResetMasterAction $resetMasterAction,
         private DistributeInstructionsAction $distributeInstructionsAction,
         private TemplateRepositoryContract $templates,
     ) {}
@@ -18,6 +24,13 @@ final class DistributeCommand extends Command
     public function handle(Input $input): int
     {
         $this->header();
+
+        $this->resetMasterAction->handle([
+            'target_dir' => getcwd() ?: '.',
+        ]);
+
+        $this->line($this->blue('♻️  Reset: master rules removed. Re-distributing...'));
+        $this->line();
 
         try {
             $result = $this->distributeInstructionsAction->handle([

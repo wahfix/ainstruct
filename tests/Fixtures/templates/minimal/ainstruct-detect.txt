@@ -1,0 +1,4 @@
+# ainstruct-detect.txt — sinyal pendeteksi stack untuk template minimal (fixture).
+# Format: <bobot>|<tipe>|<argumen>|<label>
+5|file|artisan|CLI artisan milik Laravel
+4|grep|composer.json:laravel/framework|Dependency composer 'laravel/framework'

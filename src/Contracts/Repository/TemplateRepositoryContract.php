@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Contracts\Repository;
 
 use Lace\Ainstruct\Exceptions\TemplateNotFoundException;
@@ -33,4 +31,22 @@ interface TemplateRepositoryContract
      * @return list<string>
      */
     public function names(): array;
+
+    /**
+     * Path direktori custom konsumen untuk nama template (tanpa validasi ada).
+     */
+    public function consumerPathFor(string $name): string;
+
+    /**
+     * Built-in dengan nama sama (case-insensitive) atau null.
+     */
+    public function findBuiltin(string $name): ?Template;
+
+    /**
+     * Kandidat untuk `init`: custom dulu lalu built-in, nama unik
+     * (case-insensitive) — custom shadow built-in.
+     *
+     * @return list<Template>
+     */
+    public function candidates(): array;
 }

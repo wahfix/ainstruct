@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Repositories;
 
 use Lace\Ainstruct\Contracts\Repository\TemplateRepositoryContract;
@@ -66,6 +64,43 @@ final class TemplateRepository implements TemplateRepositoryContract
         sort($names);
 
         return $names;
+    }
+
+    public function consumerPathFor(string $name): string
+    {
+        return $this->paths->consumerTemplatesDir().DIRECTORY_SEPARATOR.$name;
+    }
+
+    public function findBuiltin(string $name): ?Template
+    {
+        $lower = strtolower($name);
+
+        foreach ($this->builtin() as $template) {
+            if (strtolower($template->name) === $lower) {
+                return $template;
+            }
+        }
+
+        return null;
+    }
+
+    public function candidates(): array
+    {
+        $seen = [];
+        $candidates = [];
+
+        foreach ([...$this->custom(), ...$this->builtin()] as $template) {
+            $key = strtolower($template->name);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            $candidates[] = $template;
+        }
+
+        return $candidates;
     }
 
     /**
