@@ -47,7 +47,7 @@ final class WipeCommandTest extends TestCase
         [$exit, $output] = $this->runCapture($app, ['wipe', '--force']);
 
         $this->assertSame(0, $exit);
-        $this->assertStringContainsString('Wipe instruksi AI dari:', $output);
+        $this->assertStringContainsString('Akan menghapus dari:', $output);
         $this->assertStringContainsString('Wipe selesai.', $output);
 
         foreach ($artifacts as $artifact) {

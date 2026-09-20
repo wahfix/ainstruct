@@ -3,6 +3,7 @@
 namespace Lace\Ainstruct\Abstractions\Commands;
 
 use Lace\Ainstruct\Console\Input;
+use Lace\Ainstruct\Console\Style;
 use Lace\Ainstruct\Contracts\Repository\TemplateRepositoryContract;
 use Lace\Ainstruct\Enums\TemplateOrigin;
 use Lace\Ainstruct\Exceptions\TemplateNotFoundException;
@@ -10,15 +11,16 @@ use Lace\Ainstruct\Values\DistributionResult;
 
 abstract class Command
 {
-    protected const BLUE = "\033[0;34m";
+    protected ?Style $style = null;
 
-    protected const GREEN = "\033[0;32m";
-
-    protected const YELLOW = "\033[1;33m";
-
-    protected const RED = "\033[0;31m";
-
-    protected const NC = "\033[0m";
+    /**
+     * Style (lazy). Dipanggil `$this->style()->...` — membuat instance
+     * tunggal per command tanpa bergantung pada parent constructor.
+     */
+    protected function style(): Style
+    {
+        return $this->style ??= new Style;
+    }
 
     /**
      * Mainkan satu command; kembalikan exit code.
@@ -26,46 +28,19 @@ abstract class Command
     abstract public function handle(Input $input): int;
 
     /**
-     * Header kotak biru. Output JANGAN dicetak oleh subcommand `status --json`
-     * agar JSON tetap murni (kontrak untuk automation/CI).
+     * Panel header brand. JANGAN dipakai subcommand `status --json`
+     * agar JSON tetap murni (kontrak automation/CI).
      */
-    protected function header(): void
+    protected function header(string $subtitle = ''): void
     {
-        $this->line(self::BLUE.'╔══════════════════════════════════════════════════════════╗'.self::NC);
-        $this->line(self::BLUE.'║  AI Instructions Distribution Script                    ║'.self::NC);
-        $this->line(self::BLUE.'╚══════════════════════════════════════════════════════════╝'.self::NC);
-        $this->line();
-    }
-
-    protected function line(string $text = ''): void
-    {
-        echo $text.PHP_EOL;
-    }
-
-    protected function blue(string $text): string
-    {
-        return self::BLUE.$text.self::NC;
-    }
-
-    protected function green(string $text): string
-    {
-        return self::GREEN.$text.self::NC;
-    }
-
-    protected function yellow(string $text): string
-    {
-        return self::YELLOW.$text.self::NC;
-    }
-
-    protected function red(string $text): string
-    {
-        return self::RED.$text.self::NC;
+        $this->style()->panel('ainstruct', $subtitle, Style::version());
+        $this->style()->blank();
     }
 
     /**
      * Konfirmasi destruktif di layer command (UI): `--force` → langsung,
-     * non-TTY → false + pesan, TTY → tanya [y/N]. Kembalikan null saat
-     * non-interaktif agar command meneruskan exit 1.
+     * non-TTY → null + pesan, TTY → prompt Laravel. Kembalikan null agar
+     * command meneruskan exit 1.
      */
     protected function confirmOrFail(bool $force, string $question, string $action): ?bool
     {
@@ -73,16 +48,7 @@ abstract class Command
             return true;
         }
 
-        if (! stream_isatty(STDIN)) {
-            $this->line($this->red('❌ Terminal non-interaktif — jalankan dengan --force untuk mengeksekusi '.$action.'.'));
-
-            return null;
-        }
-
-        $this->line($question);
-        $answer = strtolower(trim((string) fgets(STDIN)));
-
-        return in_array($answer, ['y', 'yes'], true);
+        return $this->style()->confirm($question, $action);
     }
 
     /**
@@ -92,109 +58,124 @@ abstract class Command
     protected function renderDistributionResult(DistributionResult $result): void
     {
         $sourceNote = $result->templateSource === 'custom'
-            ? '🧩 Template: custom konsumen (terbuka untuk diedit)'
-            : '🧩 Template: built-in (terproteksi — clone untuk customisasi)';
+            ? 'custom konsumen (terbuka untuk diedit)'
+            : 'built-in (terproteksi, clone untuk customisasi)';
 
-        $this->line($this->yellow('📦 Framework/Template: '.$result->framework));
-        $this->line($this->yellow($sourceNote));
-        $this->line($this->yellow('📄 Sumber: '.$result->templateDir));
-        $this->line($this->yellow('🎯 Target: '.getcwd() ?: '.'));
-        $this->line();
+        $this->style()->section('Distribusi');
+        $this->style()->keyValue('Framework', $result->framework);
+        $this->style()->keyValue('Template', $sourceNote);
+        $this->style()->keyValue('Sumber', $result->templateDir);
+        $this->style()->keyValue('Target', getcwd() ?: '.');
+        $this->style()->blank();
 
         foreach ($result->sections as $section) {
-            $this->line($this->blue($section['header']));
+            $this->style()->line($this->style()->cyan($section['header']));
 
             foreach ($section['lines'] as $line) {
                 $this->renderLine($line);
             }
 
-            $this->line();
+            $this->style()->blank();
         }
 
-        $this->line($this->green('══════════════════════════════════════════════════════════'));
-        $this->line($this->green('✅ Selesai! '.$result->count().' file berhasil didistribusikan.'));
-        $this->line($this->green('══════════════════════════════════════════════════════════'));
-        $this->line();
-        $this->line($this->yellow('📋 File yang di-generate:'));
-        $this->line('   ├── ai-instructions/master/ai-instructions.md  (MASTER — edit di sini!)');
-        $this->line('   ├── ai-instructions/master/ai-instructions/    (Modul master — edit di sini, opsional)');
-        $this->line('   ├── AGENTS.md                                    (Claude/Anthropic + opencode)');
-        $this->line('   ├── CLAUDE.md                                    (Claude)');
-        $this->line('   ├── GEMINI.md                                    (Google Gemini)');
-        $this->line('   ├── .github/copilot-instructions.md              (GitHub Copilot)');
-        $this->line('   ├── .cursorrules                                 (Cursor - legacy)');
-        $this->line('   ├── .cursor/rules/'.$result->framework.'-directives.mdc     (Cursor - modular)');
-        $this->line('   ├── .windsurfrules                               (Windsurf)');
-        $this->line('   ├── .clinerules/'.$result->framework.'-directives.md        (Cline)');
-        $this->line('   ├── .continuerules                               (Continue.dev)');
-        $this->line('   ├── ai-instructions/                             (Modul 01-11 + project-specific)');
-        $this->line('   ├── .aider.conf.yml                              (Aider)');
-        $this->line('   └── opencode.json                                (opencode — default AI untuk pekerjaan)');
-        $this->line();
-        $this->line($this->yellow('💡 Tambah instruksi custom:'));
-        $this->line('   1. Edit ai-instructions/master/ai-instructions.md (dan/atau ai-instructions/master/ai-instructions/)');
-        $this->line('   2. Jalankan ulang script untuk mendistribusikan ulang custom-nya:');
-        $this->line('      ainstruct '.$result->framework);
-        $this->line();
-        $this->line($this->yellow('💡 Tip: Untuk mengganti framework, jalankan:'));
-        $this->line('   ainstruct <framework>');
-        $this->line();
+        $this->style()->success('Selesai! '.$result->count().' file berhasil didistribusikan.');
+        $this->style()->blank();
+        $this->style()->section('File yang di-generate');
+        $this->style()->bullet($this->style()->dim('ai-instructions/master/ai-instructions.md').'  (MASTER, edit di sini!)');
+        $this->style()->bullet($this->style()->dim('ai-instructions/master/ai-instructions/').'  (Modul master, edit di sini, opsional)');
+        $this->style()->bullet($this->style()->dim('AGENTS.md').'  (Claude/Anthropic + opencode)');
+        $this->style()->bullet($this->style()->dim('CLAUDE.md').'  (Claude)');
+        $this->style()->bullet($this->style()->dim('GEMINI.md').'  (Google Gemini)');
+        $this->style()->bullet($this->style()->dim('.github/copilot-instructions.md').'  (GitHub Copilot)');
+        $this->style()->bullet($this->style()->dim('.cursorrules').'  (Cursor, legacy)');
+        $this->style()->bullet($this->style()->dim('.cursor/rules/'.$result->framework.'-directives.mdc').'  (Cursor, modular)');
+        $this->style()->bullet($this->style()->dim('.windsurfrules').'  (Windsurf)');
+        $this->style()->bullet($this->style()->dim('.clinerules/'.$result->framework.'-directives.md').'  (Cline)');
+        $this->style()->bullet($this->style()->dim('.continuerules').'  (Continue.dev)');
+        $this->style()->bullet($this->style()->dim('ai-instructions/').'  (Modul 01-11 + project-specific)');
+        $this->style()->bullet($this->style()->dim('.aider.conf.yml').'  (Aider)');
+        $this->style()->bullet($this->style()->dim('opencode.json').'  (opencode, default AI untuk pekerjaan)');
+        $this->style()->blank();
+        $this->style()->section('Tambah instruksi custom');
+        $this->style()->bullet('Edit '.$this->style()->dim('ai-instructions/master/ai-instructions.md').' (dan/atau '.$this->style()->dim('ai-instructions/master/ai-instructions/').')');
+        $this->style()->bullet('Jalankan ulang untuk mendistribusikan custom: '.$this->style()->cyan('ainstruct '.$result->framework));
+        $this->style()->blank();
+        $this->style()->section('Ganti framework');
+        $this->style()->bullet($this->style()->cyan('ainstruct <framework>'));
+        $this->style()->blank();
     }
 
     protected function renderLine(string $line): void
     {
-        $coloredEmoji = [
-            '🆕' => self::BLUE,
-            '📝' => self::YELLOW,
-            '⚠️' => self::YELLOW,
-            'ℹ️' => self::YELLOW,
-            '✅' => self::GREEN,
+        $labels = [
+            '🆕' => 'check',
+            '📝' => 'notice',
+            '⚠️' => 'notice',
+            'ℹ️' => 'notice',
+            '✅' => 'check',
         ];
 
-        foreach ($coloredEmoji as $emoji => $color) {
+        // Backward-compat: baris dengan emoji status lama tetap ditampilkan
+        // sebagai simbol fungsional (tanpa emoji).
+        foreach ($labels as $emoji => $method) {
             if (str_starts_with($line, $emoji)) {
-                $this->line('  '.$color.$emoji.self::NC.mb_substr($line, mb_strlen($emoji)));
+                $text = mb_substr($line, mb_strlen($emoji));
+
+                $this->style()->{$method}($text);
 
                 return;
             }
         }
 
-        $this->line('  '.$line);
+        if (str_starts_with($line, '  ')) {
+            $this->style()->bullet(ltrim($line));
+
+            return;
+        }
+
+        $this->style()->bullet($line);
     }
 
     protected function renderNotFound(TemplateNotFoundException $e): void
     {
-        $this->line($this->red('❌ '.$e->getMessage()));
-        $this->line();
+        $this->style()->error($e->getMessage());
+        $this->style()->blank();
 
         if ($e->available() !== []) {
-            $this->line($this->yellow('📂 Frameworks tersedia:'));
+            $this->style()->section('Framework tersedia');
             foreach ($e->available() as $name) {
-                $this->line('   • '.$this->green($name));
+                $this->style()->bullet($this->style()->green($name));
             }
-            $this->line();
+            $this->style()->blank();
         }
     }
 
     protected function showFrameworks(TemplateRepositoryContract $templates): void
     {
-        $this->line($this->yellow('📂 Frameworks tersedia:'));
-        $this->line('  '.$this->blue('Built-in (terproteksi):'));
+        $this->style()->section('Framework tersedia');
 
-        foreach ($templates->all() as $template) {
-            if ($template->origin === TemplateOrigin::BUILTIN) {
-                $this->line('   • '.$this->green($template->name));
-            }
+        $builtin = array_values(array_filter(
+            $templates->all(),
+            fn ($template): bool => $template->origin === TemplateOrigin::BUILTIN
+        ));
+
+        $custom = array_values(array_filter(
+            $templates->all(),
+            fn ($template): bool => $template->origin === TemplateOrigin::CUSTOM
+        ));
+
+        $this->style()->bullet($this->style()->cyan('Built-in (terproteksi):').' '.implode(', ', array_map(
+            fn ($template): string => $this->style()->green($template->name),
+            $builtin
+        )));
+
+        if ($custom !== []) {
+            $this->style()->bullet($this->style()->yellow('Custom (milik konsumen):').' '.implode(', ', array_map(
+                fn ($template): string => $this->style()->green($template->name),
+                $custom
+            )));
         }
 
-        $this->line('  '.$this->yellow('Custom (milik konsumen — dapat diubah/hapus):'));
-
-        foreach ($templates->all() as $template) {
-            if ($template->origin === TemplateOrigin::CUSTOM) {
-                $this->line('   • '.$this->green($template->name));
-            }
-        }
-
-        $this->line();
+        $this->style()->blank();
     }
 }
