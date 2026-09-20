@@ -204,13 +204,17 @@ jobs:
           printf '\n# EDITED\n' >> "$SDIR/AGENTS.md"
           ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status >/dev/null 2>&1 ) \
             && { echo "FAIL: status harus mendeteksi AGENTS.md drift"; exit 1; }
-          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status | grep 'AGENTS.md' >/dev/null ) \
+          # status exit 1 (drift) → tangkap output dulu; pipefail CI akan
+          # membalik exit pipeline bila status digabung langsung dengan grep.
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status 2>&1 || true ) \
+            | grep 'AGENTS.md' >/dev/null \
             || { echo "FAIL: status tidak menyebut AGENTS.md sebagai drift"; exit 1; }
           # belum didistribusikan: proyek kosong → masalah & exit 1
           mkdir -p "$TMP/status-empty"
           ( cd "$TMP/status-empty" && "$TMP/bin/setup-ai-rules.sh" status >/dev/null 2>&1 ) \
             && { echo "FAIL: status di proyek tanpa instruksi harus exit 1"; exit 1; }
-          ( cd "$TMP/status-empty" && "$TMP/bin/setup-ai-rules.sh" status | grep 'belum' >/dev/null ) \
+          ( cd "$TMP/status-empty" && "$TMP/bin/setup-ai-rules.sh" status 2>&1 || true ) \
+            | grep 'belum' >/dev/null \
             || { echo "FAIL: status tidak menyebut belum didistribusikan"; exit 1; }
 
           echo "smoke test: PASS"
