@@ -27,11 +27,6 @@ final class TemplateNotFoundException extends AinstructException
         );
     }
 
-    public function templateName(): string
-    {
-        return $this->templateName;
-    }
-
     /**
      * @return list<string>
      */

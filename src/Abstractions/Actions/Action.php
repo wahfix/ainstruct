@@ -13,7 +13,7 @@ abstract class Action
      *
      * @param  array<string, mixed>  $payload
      */
-    public function handle(array $payload): mixed
+    public function handle(array $payload = []): mixed
     {
         if ($this instanceof RuledActionContract) {
             $validated = Validator::fromRules($this->rules())->validate($payload);

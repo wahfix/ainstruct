@@ -25,9 +25,7 @@ final class ResetCommand extends Command
     {
         $this->header('Reset instruksi AI');
 
-        $this->resetMasterAction->handle([
-            'target_dir' => getcwd() ?: '.',
-        ]);
+        $this->resetMasterAction->handle();
 
         $this->style()->notice('Master rules dihapus. Mendistribusikan ulang...');
         $this->style()->blank();
@@ -35,7 +33,6 @@ final class ResetCommand extends Command
         try {
             $result = $this->distributeInstructionsAction->handle([
                 'template' => $input->firstPositional(),
-                'target_dir' => getcwd() ?: '.',
             ]);
         } catch (TemplateNotFoundException $e) {
             $this->renderNotFound($e);

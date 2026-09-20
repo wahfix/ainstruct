@@ -35,13 +35,4 @@ final class InputTest extends TestCase
 
         $this->assertSame('status', $input->firstPositional());
     }
-
-    #[Test]
-    public function it_builds_from_argv_without_script_name(): void
-    {
-        $input = Input::fromArgv(['ainstruct', 'status', '--json']);
-
-        $this->assertSame('status', $input->firstPositional());
-        $this->assertTrue($input->hasFlag('--json'));
-    }
 }

@@ -33,7 +33,7 @@ final class DistributeInstructionsActionTest extends TestCase
         $paths = new Paths('/fake/target', '/fake/pkg');
         $action = new DistributeInstructionsAction($templates, $masters, $files, $paths);
 
-        $result = $action->handle(['template' => 'laravel', 'target_dir' => '/fake/target']);
+        $result = $action->handle(['template' => 'laravel']);
 
         $this->assertSame('laravel', $result->framework);
         $this->assertSame('builtin', $result->templateSource);
@@ -54,7 +54,7 @@ final class DistributeInstructionsActionTest extends TestCase
 
         $action = new DistributeInstructionsAction($templates, $masters, $files, new Paths('/fake/target', '/fake/pkg'));
 
-        $action->handle(['template' => 'nope', 'target_dir' => '/fake/target']);
+        $action->handle(['template' => 'nope']);
     }
 
     #[Test]
@@ -71,6 +71,6 @@ final class DistributeInstructionsActionTest extends TestCase
 
         $action = new DistributeInstructionsAction($templates, $masters, $files, new Paths('/fake/target', '/fake/pkg'));
 
-        $action->handle(['template' => null, 'target_dir' => '/fake/target']);
+        $action->handle(['template' => null]);
     }
 }

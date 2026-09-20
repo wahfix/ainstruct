@@ -3,12 +3,11 @@
 namespace Lace\Ainstruct\Actions\Distribution;
 
 use Lace\Ainstruct\Abstractions\Actions\Action;
-use Lace\Ainstruct\Contracts\Actions\RuledActionContract;
 use Lace\Ainstruct\Contracts\Repository\InstructionFileRepositoryContract;
 use Lace\Ainstruct\Support\Paths;
 use Lace\Ainstruct\Values\WipeResult;
 
-final class WipeInstructionsAction extends Action implements RuledActionContract
+final class WipeInstructionsAction extends Action
 {
     /** File artefak yang dihapus wipe (kontrak bash). */
     public const WIPE_FILES = [
@@ -43,14 +42,6 @@ final class WipeInstructionsAction extends Action implements RuledActionContract
         private InstructionFileRepositoryContract $files,
         private Paths $paths,
     ) {}
-
-    public function rules(): array
-    {
-        return [
-            'force' => ['nullable', 'boolean'],
-            'target_dir' => ['required', 'string'],
-        ];
-    }
 
     protected function handler(array $payload): WipeResult
     {

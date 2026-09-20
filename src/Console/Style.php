@@ -3,8 +3,6 @@
 namespace Lace\Ainstruct\Console;
 
 use Composer\InstalledVersions;
-use Lace\Ainstruct\Enums\TemplateOrigin;
-use Lace\Ainstruct\Values\Template;
 
 use function Laravel\Prompts\confirm;
 
@@ -258,16 +256,6 @@ final class Style
         }
 
         return confirm($question);
-    }
-
-    /**
-     * Resource type badge untuk template list.
-     */
-    public function templateOriginTag(Template $template): string
-    {
-        return $template->origin === TemplateOrigin::BUILTIN
-            ? $this->cyan('built-in')
-            : $this->yellow('custom');
     }
 
     private function block(string $label, string $text, string $bg, string $fg): void

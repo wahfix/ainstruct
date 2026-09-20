@@ -83,7 +83,6 @@ final class InitCommand extends Command
         try {
             $result = $this->distributeInstructionsAction->handle([
                 'template' => $chosen->templateName,
-                'target_dir' => $projectDir,
             ]);
         } catch (TemplateNotFoundException $e) {
             $this->renderNotFound($e);

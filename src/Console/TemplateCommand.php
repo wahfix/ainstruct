@@ -63,7 +63,7 @@ final class TemplateCommand extends Command
 
     private function listTemplates(): int
     {
-        $templates = $this->getTemplatesAction->handle([]);
+        $templates = $this->getTemplatesAction->handle();
 
         $builtin = array_values(array_filter(
             $templates,
