@@ -26,62 +26,62 @@ final class StatusCommand extends Command
             return $status->issues === 0 ? 0 : 1;
         }
 
-        $this->header();
+        $this->header('Periksa kesehatan instruksi AI');
+        $this->style()->section('Status di '.(getcwd() ?: '.'));
 
         $status = $this->getStatusAction->handle(['target_dir' => getcwd() ?: '.']);
 
-        $this->line($this->blue('📋 Status Instruksi AI — '.$status->targetDir));
-
-        $this->line('  '.$this->yellow('Template aktif   :').' '.$this->formatActiveTemplate($status));
-
-        $this->line('  '.$this->yellow('Master           :').' '.$this->formatMaster($status));
-
-        $this->line('  '.$this->yellow('opencode CLI     :').' '.($status->opencodeInstalled ? 'terpasang' : 'tidak terpasang (opsional)'));
-        $this->line();
-        $this->line('  '.$this->yellow('Artefak          :').' '.$status->artifactsPresent.'/'.$status->artifactsTotal.' hadir');
+        $this->style()->keyValue('Template aktif', $this->formatActiveTemplate($status));
+        $this->style()->keyValue('Master', $this->formatMaster($status));
+        $this->style()->keyValue('opencode CLI', $status->opencodeInstalled ? 'terpasang' : 'tidak terpasang (opsional)', $status->opencodeInstalled ? 'green' : 'dim');
+        $this->style()->blank();
+        $this->style()->keyValue('Artefak', $status->artifactsPresent.'/'.$status->artifactsTotal.' hadir', $status->issues === 0 ? 'green' : 'yellow');
 
         if ($status->missing !== []) {
-            $this->line('  '.$this->red('❌ Hilang:'));
+            $this->style()->blank();
+            $this->style()->cross('Hilang:');
 
             foreach ($status->missing as $file) {
-                $this->line('     - '.$file);
+                $this->style()->bullet($this->style()->red($file));
             }
         }
 
         if ($status->outOfSync !== []) {
-            $this->line('  '.$this->yellow('⚠️  Berbeda dari master (diedit manual / belum di-redistribute):'));
+            $this->style()->blank();
+            $this->style()->notice('Berbeda dari master (diedit manual / belum di-redistribute):');
 
             foreach ($status->outOfSync as $file) {
-                $this->line('     - '.$file);
+                $this->style()->bullet($file);
             }
         }
 
         if ($status->moduleOutOfSync) {
-            $this->line('  '.$this->yellow('⚠️  Modul ai-instructions/ belum sinkron dengan master module.'));
+            $this->style()->blank();
+            $this->style()->notice('Modul ai-instructions/ belum sinkron dengan master module.');
         }
 
-        $this->line();
+        $this->style()->blank();
 
         if ($status->issues === 0) {
-            $this->line($this->green('✅ Sehat — semua artefak hadir & sinkron dengan master.'));
-            $this->line();
+            $this->style()->success('Sehat: semua artefak hadir dan sinkron dengan master.');
+            $this->style()->blank();
 
             return 0;
         }
 
-        $this->line($this->red('⚠️  '.$status->issues.' masalah ditemukan.'));
+        $this->style()->error($status->issues.' masalah ditemukan.');
 
         if (! $status->masterExists) {
-            $this->line($this->yellow('   Instruksi belum pernah didistribusikan di sini. Jalankan:'));
-            $this->line('     ainstruct <framework>   # mis. ainstruct laravel');
+            $this->style()->bullet('Instruksi belum pernah didistribusikan di sini. Jalankan:');
+            $this->style()->bullet($this->style()->cyan('ainstruct <framework>').'   # mis. ainstruct laravel');
         } else {
-            $this->line($this->yellow('   Sinkronkan ulang dari master (custom dipertahankan):'));
-            $this->line('     ainstruct '.($status->activeTemplate ?? '<framework>'));
+            $this->style()->bullet('Sinkronkan ulang dari master (custom dipertahankan):');
+            $this->style()->bullet($this->style()->cyan('ainstruct '.($status->activeTemplate ?? '<framework>')));
         }
 
-        $this->line();
-        $this->line($this->yellow('   DILARANG mengedit file hasil distribusi langsung; edit ai-instructions/master/ lalu jalankan ulang.'));
-        $this->line();
+        $this->style()->blank();
+        $this->style()->bullet($this->style()->dim('DILARANG mengedit file hasil distribusi langsung; edit ai-instructions/master/ lalu jalankan ulang.'));
+        $this->style()->blank();
 
         return 1;
     }
@@ -89,38 +89,41 @@ final class StatusCommand extends Command
     private function formatActiveTemplate(InstructionStatus $status): string
     {
         if ($status->activeTemplate !== null) {
-            return $this->green($status->activeTemplate).' ('.$status->templateSource.')';
+            return $this->style()->green($status->activeTemplate).' ('.$status->templateSource.')';
         }
 
         if ($status->masterExists) {
-            return $this->yellow('master custom — tidak cocok template mana pun');
+            return $this->style()->yellow('master custom: tidak cocok template mana pun');
         }
 
-        return '— (belum didistribusikan)';
+        return $this->style()->dim('(belum didistribusikan)');
     }
 
     private function formatMaster(InstructionStatus $status): string
     {
         if (! $status->masterExists) {
-            return $this->red('TIDAK ADA');
+            return $this->style()->red('TIDAK ADA');
         }
 
         return $status->masterCustomized
-            ? 'ada · custom (edit aman, dipertahankan)'
-            : 'ada · default';
+            ? $this->style()->yellow('ada, custom (edit aman, dipertahankan)')
+            : $this->style()->green('ada, default');
     }
 
     private function usage(): void
     {
-        $this->line($this->yellow('status — periksa kesehatan state instruksi AI di direktori saat ini (pwd).'));
-        $this->line('Tidak mengubah apa pun; laporkan template aktif, artefak yang hilang atau');
-        $this->line('berbeda dari master, dan langkah perbaikan.');
-        $this->line();
-        $this->line('Usage:');
-        $this->line('  ainstruct status             Laporan untuk manusia (berwarna)');
-        $this->line('  ainstruct status --json      Laporan JSON (untuk automation/CI)');
-        $this->line();
-        $this->line('Exit code: 0 = sehat (artefak lengkap & sinkron); 1 = ada masalah.');
-        $this->line();
+        $this->header('Periksa kesehatan instruksi AI');
+        $this->style()->section('Deskripsi');
+        $this->style()->bullet('Periksa state instruksi AI di direktori saat ini (pwd).');
+        $this->style()->bullet('Tidak mengubah apa pun; laporkan template aktif, artefak hilang,');
+        $this->style()->bullet('berbeda dari master, dan langkah perbaikan.');
+        $this->style()->blank();
+        $this->style()->section('Usage');
+        $this->style()->bullet($this->style()->cyan('ainstruct status').'             Laporan untuk manusia (berwarna)');
+        $this->style()->bullet($this->style()->cyan('ainstruct status --json').'      Laporan JSON (untuk automation/CI)');
+        $this->style()->blank();
+        $this->style()->section('Exit code');
+        $this->style()->bullet('0 = sehat (artefak lengkap & sinkron); 1 = ada masalah.');
+        $this->style()->blank();
     }
 }

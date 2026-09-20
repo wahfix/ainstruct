@@ -29,7 +29,7 @@ final class ResetCommandTest extends TestCase
         [$exit, $output] = $this->runCapture($app, ['reset', 'minimal']);
 
         $this->assertSame(0, $exit);
-        $this->assertStringContainsString('Reset: master rules removed. Re-distributing...', $output);
+        $this->assertStringContainsString('Master rules dihapus', $output);
         $this->assertStringContainsString('minimal', $output);
 
         $freshMaster = (string) file_get_contents($masterConstitution);
@@ -51,6 +51,6 @@ final class ResetCommandTest extends TestCase
         [$exit, $output] = $this->runCapture($app, ['reset']);
 
         $this->assertSame(1, $exit);
-        $this->assertStringContainsString('Frameworks tersedia:', $output);
+        $this->assertStringContainsString('Framework tersedia', $output);
     }
 }

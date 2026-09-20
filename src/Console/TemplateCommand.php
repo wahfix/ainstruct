@@ -34,8 +34,8 @@ final class TemplateCommand extends Command
         $subcommand = strtolower((string) ($input->argument(0) ?? 'help'));
 
         if (! in_array($subcommand, self::SUBCOMMANDS, true)) {
-            $this->line($this->red("❌ Subcommand template tidak dikenal: {$subcommand}"));
-            $this->line();
+            $this->style()->error("Subcommand template tidak dikenal: {$subcommand}");
+            $this->style()->blank();
 
             return $this->usage();
         }
@@ -55,7 +55,7 @@ final class TemplateCommand extends Command
 
             return 1;
         } catch (TemplateProtectedException|AinstructException|ValidationException $e) {
-            $this->line($this->red('❌ '.$e->getMessage()));
+            $this->style()->error($e->getMessage());
 
             return 1;
         }
@@ -75,29 +75,30 @@ final class TemplateCommand extends Command
             fn (Template $template): bool => $template->origin === TemplateOrigin::CUSTOM
         ));
 
-        $this->line($this->green('📚 Template AI Instructions'));
-        $this->line('  '.$this->blue('Built-in (TERPROTEKSI):'));
+        $this->style()->info('Template AI Instructions');
+
+        $this->style()->section('Built-in (terproteksi)');
 
         if ($builtin === []) {
-            $this->line('    (tidak ada)');
+            $this->style()->bullet($this->style()->dim('(tidak ada)'));
         }
 
         foreach ($builtin as $template) {
-            $this->line('    • '.$this->green($template->name).'  ('.$template->directory.')');
+            $this->style()->bullet($this->style()->green($template->name).'  '.$this->style()->dim('('.$template->directory.')'));
         }
 
-        $this->line();
-        $this->line('  '.$this->yellow('Custom (milik konsumen — dapat diubah/hapus):'));
+        $this->style()->blank();
+        $this->style()->section('Custom (milik konsumen, dapat diubah/hapus)');
 
         if ($custom === []) {
-            $this->line('    (Belum ada template custom. Buat dengan: template create <nama>)');
+            $this->style()->bullet($this->style()->dim('Belum ada template custom. Buat dengan: template create <nama>'));
         }
 
         foreach ($custom as $template) {
-            $this->line('    • '.$this->green($template->name).'  ('.$template->directory.')');
+            $this->style()->bullet($this->style()->green($template->name).'  '.$this->style()->dim('('.$template->directory.')'));
         }
 
-        $this->line();
+        $this->style()->blank();
 
         return 0;
     }
@@ -107,8 +108,8 @@ final class TemplateCommand extends Command
         $name = (string) ($input->argument(1) ?? '');
 
         if ($name === '') {
-            $this->line($this->red('❌ template create butuh <nama>'));
-            $this->line();
+            $this->style()->error('template create butuh <nama>');
+            $this->style()->blank();
 
             return $this->usage();
         }
@@ -120,11 +121,11 @@ final class TemplateCommand extends Command
             'force' => $force,
         ]);
 
-        $this->line($this->green("✅ Template '{$template->name}' berhasil dibuat."));
-        $this->line('   '.$this->yellow('📁 Lokasi: ').$template->directory);
-        $this->line('   '.$this->yellow('📄 Edit:   ').'ai-instructions.md (konstitusi), ai-instructions/ (modul)');
-        $this->line('   '.$this->yellow('▶️  Distribusikan: ').'ainstruct '.$template->name);
-        $this->line();
+        $this->style()->success("Template '{$template->name}' berhasil dibuat.");
+        $this->style()->keyValue('Lokasi', $template->directory);
+        $this->style()->keyValue('Edit', 'ai-instructions.md (konstitusi), ai-instructions/ (modul)', 'dim');
+        $this->style()->keyValue('Distribusikan', 'ainstruct '.$template->name);
+        $this->style()->blank();
 
         return 0;
     }
@@ -135,8 +136,8 @@ final class TemplateCommand extends Command
         $source = (string) ($input->argument(2) ?? '');
 
         if ($name === '' || $source === '') {
-            $this->line($this->red('❌ template clone butuh <nama> <sumber>'));
-            $this->line();
+            $this->style()->error('template clone butuh <nama> <sumber>');
+            $this->style()->blank();
 
             return $this->usage();
         }
@@ -149,10 +150,10 @@ final class TemplateCommand extends Command
             'force' => $force,
         ]);
 
-        $this->line($this->green("✅ Template '{$template->name}' dibuat dari {$source}."));
-        $this->line('   '.$this->yellow('📁 Lokasi: ').$template->directory);
-        $this->line('   '.$this->yellow('▶️  Distribusikan: ').'ainstruct '.$template->name);
-        $this->line();
+        $this->style()->success("Template '{$template->name}' dibuat dari {$source}.");
+        $this->style()->keyValue('Lokasi', $template->directory);
+        $this->style()->keyValue('Distribusikan', 'ainstruct '.$template->name);
+        $this->style()->blank();
 
         return 0;
     }
@@ -164,8 +165,8 @@ final class TemplateCommand extends Command
         $force = $input->hasFlag('--force');
 
         if ($name === '') {
-            $this->line($this->red('❌ template update butuh <nama>'));
-            $this->line();
+            $this->style()->error('template update butuh <nama>');
+            $this->style()->blank();
 
             return $this->usage();
         }
@@ -174,7 +175,7 @@ final class TemplateCommand extends Command
 
         $confirmed = $this->confirmOrFail(
             $force,
-            "Ada template custom '{$name}' — akan ditimpa dari sumber '{$sourceLabel}'. Lanjut? [y/N]",
+            "Ada template custom '{$name}', akan ditimpa dari sumber '{$sourceLabel}'. Lanjut?",
             'update'
         );
 
@@ -183,7 +184,7 @@ final class TemplateCommand extends Command
         }
 
         if (! $confirmed) {
-            $this->line('Batal. Tidak ada yang diubah.');
+            $this->style()->notice('Batal. Tidak ada yang diubah.');
 
             return 1;
         }
@@ -194,10 +195,10 @@ final class TemplateCommand extends Command
             'force' => true,
         ]);
 
-        $this->line($this->green("✅ Template '{$template->name}' diperbarui."));
-        $this->line('   '.$this->yellow('📁 Lokasi: ').$template->directory);
-        $this->line('   '.$this->yellow('▶️  Distribusikan: ').'ainstruct '.$template->name);
-        $this->line();
+        $this->style()->success("Template '{$template->name}' diperbarui.");
+        $this->style()->keyValue('Lokasi', $template->directory);
+        $this->style()->keyValue('Distribusikan', 'ainstruct '.$template->name);
+        $this->style()->blank();
 
         return 0;
     }
@@ -208,15 +209,15 @@ final class TemplateCommand extends Command
         $force = $input->hasFlag('--force');
 
         if ($name === '') {
-            $this->line($this->red('❌ template delete butuh <nama>'));
-            $this->line();
+            $this->style()->error('template delete butuh <nama>');
+            $this->style()->blank();
 
             return $this->usage();
         }
 
         $confirmed = $this->confirmOrFail(
             $force,
-            "Hapus template custom '{$name}'? Ini PERMANEN. [y/N]",
+            "Hapus template custom '{$name}'? Ini PERMANEN.",
             'delete'
         );
 
@@ -225,7 +226,7 @@ final class TemplateCommand extends Command
         }
 
         if (! $confirmed) {
-            $this->line('Batal. Template tidak dihapus.');
+            $this->style()->notice('Batal. Template tidak dihapus.');
 
             return 1;
         }
@@ -235,8 +236,8 @@ final class TemplateCommand extends Command
             'force' => true,
         ]);
 
-        $this->line($this->green("✅ Template '{$name}' dihapus. ({$path})"));
-        $this->line();
+        $this->style()->success("Template '{$name}' dihapus. ({$path})");
+        $this->style()->blank();
 
         return 0;
     }
@@ -246,8 +247,8 @@ final class TemplateCommand extends Command
         $name = (string) ($input->argument(1) ?? '');
 
         if ($name === '') {
-            $this->line($this->red('❌ template path butuh <nama>'));
-            $this->line();
+            $this->style()->error('template path butuh <nama>');
+            $this->style()->blank();
 
             return $this->usage();
         }
@@ -255,13 +256,14 @@ final class TemplateCommand extends Command
         $template = $this->getTemplatePathAction->handle(['name' => $name]);
 
         if ($template->origin === TemplateOrigin::BUILTIN) {
-            $this->line($this->yellow("Template '{$template->name}' adalah BUILT-IN (terproteksi)."));
-            $this->line('  '.$this->yellow('Path: ').$template->directory);
-            $this->line('  ➜ Berasal dari instalasi ainstruct — tidak untuk diedit langsung.');
-            $this->line('  ➜ Customisasi: template clone <nama> '.$template->name);
-            $this->line();
+            $this->style()->notice("Template '{$template->name}' adalah BUILT-IN (terproteksi).");
+            $this->style()->keyValue('Path', $template->directory);
+            $this->style()->bullet($this->style()->dim('Berasal dari instalasi ainstruct, tidak untuk diedit langsung.'));
+            $this->style()->bullet($this->style()->dim('Customisasi: template clone <nama> '.$template->name));
+            $this->style()->blank();
         } else {
-            $this->line($template->directory);
+            // Kontrak murni untuk scripting: path custom dicetak apa adanya.
+            echo $template->directory.PHP_EOL;
         }
 
         return 0;
@@ -269,16 +271,15 @@ final class TemplateCommand extends Command
 
     private function usage(): int
     {
-        $this->line($this->yellow('📚 Template AI Instructions — manajemen template'));
-        $this->line();
-        $this->line('Usage:');
-        $this->line('  template list                  Lihat semua template');
-        $this->line('  template create <nama> [--force]   Buat template kosong baru');
-        $this->line('  template clone <nama> <sumber> [--force]   Salin template sumber (built-in/custom)');
-        $this->line('  template update <nama> [--from <sumber>] [--force]   Timpa custom dari sumber');
-        $this->line('  template delete <nama> [--force]   Hapus template custom');
-        $this->line('  template path <nama>           Tampilkan path template (custom dulu, baru built-in)');
-        $this->line();
+        $this->style()->info('Template AI Instructions, manajemen template');
+        $this->style()->section('Usage');
+        $this->style()->bullet($this->style()->cyan('template list').'                  Lihat semua template');
+        $this->style()->bullet($this->style()->cyan('template create <nama>').' [--force]   Buat template kosong baru');
+        $this->style()->bullet($this->style()->cyan('template clone <nama> <sumber>').' [--force]   Salin template sumber (built-in/custom)');
+        $this->style()->bullet($this->style()->cyan('template update <nama>').' [--from <sumber>] [--force]   Timpa custom dari sumber');
+        $this->style()->bullet($this->style()->cyan('template delete <nama>').' [--force]   Hapus template custom');
+        $this->style()->bullet($this->style()->cyan('template path <nama>').'           Tampilkan path template (custom dulu, baru built-in)');
+        $this->style()->blank();
 
         return 0;
     }

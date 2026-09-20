@@ -18,7 +18,7 @@ final class TemplateCommandTest extends TestCase
 
         $this->assertSame(0, $exit);
         $this->assertStringContainsString('Template AI Instructions', $output);
-        $this->assertStringContainsString('Built-in (TERPROTEKSI):', $output);
+        $this->assertStringContainsString('Built-in (terproteksi)', $output);
         $this->assertStringContainsString('Custom (milik konsumen', $output);
         $this->assertStringContainsString('•', $output);
         $this->assertStringContainsString('minimal', $this->stripAnsi($output));

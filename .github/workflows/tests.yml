@@ -92,6 +92,7 @@ jobs:
           # distribusi memakai template custom: marker konsumen muncul
           mkdir -p "$TMP/proj-custom"
           ( cd "$TMP/proj-custom" && $BIN mylaravel 2>&1 \
+              | sed 's/\x1b\[[0-9;]*m//g' \
               | grep 'Template: custom konsumen' >/dev/null ) \
             || { echo "FAIL: distribusi tidak memakai template konsumen"; exit 1; }
           # built-in TERPROTEKSI: tidak bisa dihapus / di-update langsung
@@ -163,6 +164,7 @@ jobs:
           mkdir -p "$CUST"
           touch "$CUST/marker-custom"
           ( cd "$CUST" && $BIN init --force 2>&1 \
+              | sed 's/\x1b\[[0-9;]*m//g' \
               | grep 'Template: custom konsumen' >/dev/null ) \
             || { echo "FAIL: init tidak memakai template custom (shadow)"; exit 1; }
           test -f "$CUST/AGENTS.md" || { echo "FAIL: init custom tidak mendistribusikan"; exit 1; }

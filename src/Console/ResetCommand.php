@@ -23,14 +23,14 @@ final class ResetCommand extends Command
 
     public function handle(Input $input): int
     {
-        $this->header();
+        $this->header('Reset instruksi AI');
 
         $this->resetMasterAction->handle([
             'target_dir' => getcwd() ?: '.',
         ]);
 
-        $this->line($this->blue('♻️  Reset: master rules removed. Re-distributing...'));
-        $this->line();
+        $this->style()->notice('Master rules dihapus. Mendistribusikan ulang...');
+        $this->style()->blank();
 
         try {
             $result = $this->distributeInstructionsAction->handle([
@@ -42,7 +42,7 @@ final class ResetCommand extends Command
 
             return 1;
         } catch (ValidationException $e) {
-            $this->line($this->red('❌ '.$e->getMessage()));
+            $this->style()->error($e->getMessage());
 
             return 1;
         }

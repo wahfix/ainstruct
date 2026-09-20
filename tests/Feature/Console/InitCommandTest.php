@@ -31,9 +31,9 @@ final class InitCommandTest extends TestCase
         [$exit, $output] = $this->runCapture($app, ['init']);
 
         $this->assertSame(0, $exit);
-        $this->assertStringContainsString('Deteksi teknologi di:', $output);
+        $this->assertStringContainsString('Deteksi teknologi di', $output);
         $this->assertStringContainsString('minimal', $output);
-        $this->assertStringContainsString('★ terpilih', $output);
+        $this->assertStringContainsString('terpilih', $output);
         $this->assertStringContainsString('Selesai!', $output);
         $this->assertFileExists($project.'/ai-instructions/master/ai-instructions.md');
         $this->assertFileExists($project.'/AGENTS.md');
