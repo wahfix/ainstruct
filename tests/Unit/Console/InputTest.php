@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Tests\Unit\Console;
 
 use Lace\Ainstruct\Console\Input;

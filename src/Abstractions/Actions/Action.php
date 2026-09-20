@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Abstractions\Actions;
 
 use Lace\Ainstruct\Contracts\Actions\RuledActionContract;

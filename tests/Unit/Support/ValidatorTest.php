@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Tests\Unit\Support;
 
 use Lace\Ainstruct\Exceptions\ValidationException;

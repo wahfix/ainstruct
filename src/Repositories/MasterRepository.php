@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Repositories;
 
 use Lace\Ainstruct\Contracts\Repository\MasterRepositoryContract;

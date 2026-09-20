@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Tests\Feature\Console;
 
 use Lace\Ainstruct\Tests\TestCase;
