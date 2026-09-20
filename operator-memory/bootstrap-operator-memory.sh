@@ -245,7 +245,10 @@ CONFIG_FILE="$OPENCODE_DIR/opencode.jsonc"
 # Rujukan portabel bila lokasi standar (~/.config/opencode), agar restore di
 # mesin lain tetap menunjuk benar; path absolut bila XDG_CONFIG_HOME di-override.
 if [[ "$OPENCODE_DIR" == "$HOME/.config/opencode" ]]; then
+  # Tilde disengaja (lihat komentar atas) — jangan diganti $HOME.
+  # shellcheck disable=SC2088
   PERSONA_REF="~/.config/opencode/skills/operator-memory/persona.md"
+  # shellcheck disable=SC2088
   CONTEXT_REF="~/.config/opencode/skills/operator-memory/context.md"
 else
   PERSONA_REF="$SKILL_DIR/persona.md"

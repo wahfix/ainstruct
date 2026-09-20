@@ -107,7 +107,7 @@ for f in "${FILES[@]}"; do
         union_tmp="$(mktemp)"
         cp "$repo_f" "$union_tmp"
         {
-          printf '\n--- GABUNGAN DARI PERANGKAT LAIN (%s) — PERLU DIRAPIKAN MANUAL ---\n'
+          printf '\n--- GABUNGAN DARI PERANGKAT LAIN (%s) — PERLU DIRAPIKAN MANUAL ---\n' "$(date -u '+%Y-%m-%d %H:%M UTC')"
           cat "$live_f"
         } >> "$union_tmp"
         cp "$union_tmp" "$live_f"
