@@ -13,7 +13,7 @@ apa yang TIDAK dijalankan.
 ## Gates yang wajib Anda coba jalankan
 
 1. **Integritas instruksi**: `bash scripts/health-check.sh` (0 kegagalan wajib).
-2. **Lint markdown**: `npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml '**/*.md'`.
+2. **Lint markdown**: `npx --yes markdownlint-cli2@0.23.2 --config .markdownlint-cli2.yaml '**/*.md'`.
 3. **PHP (engine CLI `bin/ainstruct`)**: `php -l` untuk `bin/ainstruct` dan seluruh
    `src/*.php`/`tests/*.php` (kecuali Fixtures); `vendor/bin/pint --test`;
    `vendor/bin/phpstan analyse --no-progress`; `vendor/bin/phpunit`.
