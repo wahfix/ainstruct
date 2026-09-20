@@ -4,7 +4,6 @@ namespace Lace\Ainstruct\Console;
 
 use Lace\Ainstruct\Abstractions\Commands\Command;
 use Lace\Ainstruct\Actions\Distribution\WipeInstructionsAction;
-use Lace\Ainstruct\Exceptions\ValidationException;
 
 final class WipeCommand extends Command
 {
@@ -45,16 +44,7 @@ final class WipeCommand extends Command
             return 1;
         }
 
-        try {
-            $result = $this->wipeInstructionsAction->handle([
-                'force' => true,
-                'target_dir' => $targetDir,
-            ]);
-        } catch (ValidationException $e) {
-            $this->style()->error($e->getMessage());
-
-            return 1;
-        }
+        $result = $this->wipeInstructionsAction->handle();
 
         if ($result->files === []) {
             $this->style()->info('Tidak ada artefak instruksi yang ditemukan.');

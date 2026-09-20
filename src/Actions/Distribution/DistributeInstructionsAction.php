@@ -24,7 +24,6 @@ final class DistributeInstructionsAction extends Action implements RuledActionCo
     {
         return [
             'template' => ['nullable', 'string', 'pattern:/^[A-Za-z0-9_-]+$/'],
-            'target_dir' => ['required', 'string'],
         ];
     }
 

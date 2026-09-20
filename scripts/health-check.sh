@@ -91,7 +91,6 @@ TOKEN_PATTERN='^[A-Za-z0-9._/-]+\.(md|sh)$'
 for token in "${refs[@]}"; do
   # Skip external / non-file / forbidden-artifact references.
   [[ "$token" =~ $TOKEN_PATTERN ]] || continue
-  [[ "$token" =~ http(s)?:// ]] && continue
   [[ "$token" == 'MASTER_BUILD_SPECIFICATION.md' ]] && continue
   # DESIGN.md = arah visual milik proyek konsumen (konsep antislop), bukan anchor repo.
   [[ "$token" == 'DESIGN.md' ]] && continue

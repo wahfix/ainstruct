@@ -10,14 +10,6 @@ final class Input
     public function __construct(private array $args) {}
 
     /**
-     * @param  list<string>  $argv
-     */
-    public static function fromArgv(array $argv): self
-    {
-        return new self(array_slice($argv, 1));
-    }
-
-    /**
      * Argumen posisional ke-N (tanpa flag) atau null bila tidak ada.
      */
     public function argument(int $index): ?string

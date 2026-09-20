@@ -22,7 +22,6 @@ final class DistributeCommand extends Command
         try {
             $result = $this->distributeInstructionsAction->handle([
                 'template' => $input->firstPositional(),
-                'target_dir' => getcwd() ?: '.',
             ]);
         } catch (TemplateNotFoundException $e) {
             $this->renderNotFound($e);

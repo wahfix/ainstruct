@@ -59,16 +59,6 @@ final class Paths
         return $this->targetDir().DIRECTORY_SEPARATOR.'ai-instructions'.DIRECTORY_SEPARATOR.'master';
     }
 
-    public function masterConstitutionPath(): string
-    {
-        return $this->masterDir().DIRECTORY_SEPARATOR.'ai-instructions.md';
-    }
-
-    public function masterModuleDir(): string
-    {
-        return $this->masterDir().DIRECTORY_SEPARATOR.'ai-instructions';
-    }
-
     public function moduleDir(): string
     {
         return $this->targetDir().DIRECTORY_SEPARATOR.'ai-instructions';
