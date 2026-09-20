@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Tests;
 
 use Illuminate\Container\Container;
@@ -82,6 +80,11 @@ abstract class TestCase extends BaseTestCase
         return __DIR__.'/Fixtures/'.$relative;
     }
 
+    protected function stripAnsi(string $text): string
+    {
+        return (string) preg_replace('/\033\[[0-9;]*m/', '', $text);
+    }
+
     /**
      * Salin fixture template minimal sebagai template custom konsumen.
      */
@@ -96,6 +99,7 @@ abstract class TestCase extends BaseTestCase
         copy($source.'/ai-instructions.md', $target.'/ai-instructions.md');
         copy($source.'/ai-instructions/README.md', $target.'/ai-instructions/README.md');
         copy($source.'/ai-instructions/01-intro.md', $target.'/ai-instructions/01-intro.md');
+        copy($source.'/ainstruct-detect.txt', $target.'/ainstruct-detect.txt');
 
         return $target;
     }

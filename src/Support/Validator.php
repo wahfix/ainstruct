@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Support;
 
 use Lace\Ainstruct\Exceptions\ValidationException;
@@ -50,6 +48,18 @@ final class Validator
 
                 if ($rule === 'string' && $value !== null && ! is_string($value)) {
                     throw ValidationException::for($field, 'harus berupa string');
+                }
+
+                if ($rule === 'boolean' && $value !== null && ! is_bool($value)) {
+                    throw ValidationException::for($field, 'harus berupa boolean');
+                }
+
+                if (str_starts_with($rule, 'in:') && $value !== null) {
+                    $allowed = explode(',', substr($rule, strlen('in:')));
+
+                    if (! in_array((string) $value, $allowed, true)) {
+                        throw ValidationException::for($field, 'nilai tidak diizinkan');
+                    }
                 }
 
                 if (str_starts_with($rule, 'pattern:') && $value !== null) {

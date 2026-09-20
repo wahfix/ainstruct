@@ -1,12 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Contracts\Repository;
 
 interface InstructionFileRepositoryContract
 {
     public function fileExists(string $path): bool;
+
+    public function exists(string $path): bool;
 
     public function isFile(string $path): bool;
 
@@ -17,6 +17,17 @@ interface InstructionFileRepositoryContract
     public function copyFile(string $from, string $to): void;
 
     public function writeFile(string $path, string $content): void;
+
+    public function readFile(string $path): string;
+
+    /**
+     * `cp -r from to` — target menjadi salinan direktori (bukan isi dalam to).
+     */
+    public function copyDirectory(string $from, string $to): void;
+
+    public function remove(string $path): void;
+
+    public function rmdirIfEmpty(string $dir): void;
 
     /**
      * Tulis .cursor/rules/<framework>-directives.mdc: frontmatter YAML 6 baris

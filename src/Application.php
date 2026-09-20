@@ -1,14 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct;
 
 use Illuminate\Container\Container;
 use Lace\Ainstruct\Abstractions\Commands\Command;
 use Lace\Ainstruct\Console\DistributeCommand;
+use Lace\Ainstruct\Console\InitCommand;
 use Lace\Ainstruct\Console\Input;
+use Lace\Ainstruct\Console\ResetCommand;
 use Lace\Ainstruct\Console\StatusCommand;
+use Lace\Ainstruct\Console\TemplateCommand;
+use Lace\Ainstruct\Console\WipeCommand;
 
 final class Application
 {
@@ -21,6 +23,10 @@ final class Application
     private const COMMANDS = [
         'distribute' => DistributeCommand::class,
         'status' => StatusCommand::class,
+        'wipe' => WipeCommand::class,
+        'reset' => ResetCommand::class,
+        'template' => TemplateCommand::class,
+        'init' => InitCommand::class,
     ];
 
     public function __construct(private Container $container) {}

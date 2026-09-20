@@ -1,16 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Bootstrap;
 
 use Illuminate\Container\Container;
+use Lace\Ainstruct\Contracts\Detection\StackDetectorContract;
 use Lace\Ainstruct\Contracts\Repository\InstructionFileRepositoryContract;
 use Lace\Ainstruct\Contracts\Repository\MasterRepositoryContract;
 use Lace\Ainstruct\Contracts\Repository\TemplateRepositoryContract;
 use Lace\Ainstruct\Repositories\InstructionFileRepository;
 use Lace\Ainstruct\Repositories\MasterRepository;
 use Lace\Ainstruct\Repositories\TemplateRepository;
+use Lace\Ainstruct\Services\Detection\StackDetectionService;
 use Lace\Ainstruct\Support\Filesystem;
 use Lace\Ainstruct\Support\Paths;
 
@@ -30,5 +30,6 @@ final class AppServiceProvider
         $this->container->singleton(TemplateRepositoryContract::class, TemplateRepository::class);
         $this->container->singleton(MasterRepositoryContract::class, MasterRepository::class);
         $this->container->singleton(InstructionFileRepositoryContract::class, InstructionFileRepository::class);
+        $this->container->singleton(StackDetectorContract::class, StackDetectionService::class);
     }
 }
