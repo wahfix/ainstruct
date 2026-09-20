@@ -45,3 +45,6 @@ opencode.json
 /node_modules/
 /composer.lock
 /package-lock.json
+
+# Cache PHPUnit
+/.phpunit.cache/

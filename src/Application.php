@@ -1,0 +1,49 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lace\Ainstruct;
+
+use Illuminate\Container\Container;
+use Lace\Ainstruct\Abstractions\Commands\Command;
+use Lace\Ainstruct\Console\DistributeCommand;
+use Lace\Ainstruct\Console\Input;
+use Lace\Ainstruct\Console\StatusCommand;
+
+final class Application
+{
+    /**
+     * Command token ke class. Token yang tidak dikenal dianggap sebagai
+     * framework untuk subcommand default `distribute` (kontrak bash lama).
+     *
+     * @var array<string, class-string<Command>>
+     */
+    private const COMMANDS = [
+        'distribute' => DistributeCommand::class,
+        'status' => StatusCommand::class,
+    ];
+
+    public function __construct(private Container $container) {}
+
+    /**
+     * Jalankan CLI dengan argumen user (tanpa nama script).
+     *
+     * @param  list<string>  $args
+     */
+    public function run(array $args): int
+    {
+        $commandName = 'distribute';
+        $commandArgs = $args;
+
+        $first = strtolower((string) ($args[0] ?? ''));
+
+        if (isset(self::COMMANDS[$first])) {
+            $commandName = $first;
+            $commandArgs = array_slice($args, 1);
+        }
+
+        $command = $this->container->make(self::COMMANDS[$commandName]);
+
+        return $command->handle(new Input($commandArgs));
+    }
+}
