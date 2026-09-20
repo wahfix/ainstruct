@@ -10,6 +10,7 @@
 #   ./bin/setup-ai-rules.sh [framework]       # Distribusikan instruksi ke pwd
 #   ./bin/setup-ai-rules.sh reset [framework] # Reset instruksi ke default template
 #   ./bin/setup-ai-rules.sh wipe [--force]    # Hapus SEMUA artefak instruksi dari pwd
+#   ./bin/setup-ai-rules.sh status [--json]   # Periksa kesehatan state instruksi di pwd
 #   ./bin/setup-ai-rules.sh template <cmd>    # Kelola template milik konsumen
 #   ./bin/setup-ai-rules.sh help              # Tampilkan bantuan
 #
@@ -844,7 +845,8 @@ Usage: $0 [<framework>]           Distribusikan instruksi ke proyek konsumen (pw
        $0 reset [<framework>]     Reset instruksi ke default template
                                   (hapus ai-instructions/master + distribusi ulang)
        $0 wipe [--force]          Hapus SEMUA artefak instruksi dari pwd
-       $0 init [options]         Deteksi stack proyek di pwd lalu scaffold
+       $0 status [--json]         Periksa kesehatan state instruksi di pwd
+       $0 init [options]          Deteksi stack proyek di pwd lalu scaffold
                                   template yang cocok (lihat 'init --help' di bawah)
        $0 template <cmd>          Kelola template AI Instructions (lihat 'template help')
        $0 help                    Tampilkan bantuan ini
@@ -861,6 +863,10 @@ Commands:
                .continuerules, .aider.conf.yml, opencode.json, .opencode/,
                ai-instructions/ (termasuk master/).
                Tanpa --force, diminta konfirmasi.
+  status       Periksa kesehatan state instruksi di pwd: template aktif, artefak
+               yang hilang/berbeda dari master, status master (default/custom),
+               dan langkah perbaikan. Tanpa mengubah apa pun; --json untuk
+               automation/CI (output murni JSON). Exit 0 = sehat, 1 = masalah.
   init         Deteksi stack proyek (baca 'ainstruct-detect.txt' tiap template)
                lalu distribusikan template dengan skor tertinggi. Opsi:
                --dry-run (hanya laporan, tanpa perubahan), --template <nama>
@@ -872,12 +878,15 @@ Commands:
 Options:
   --force      Lewati konfirmasi pada perintah wipe (untuk automation/CI).
   init --dry-run  Laporan deteksi tanpa mengubah proyek.
+  status --json   Laporan status JSON (untuk automation/CI).
 
 Examples:
   ainstruct laravel          Distribusikan framework laravel
   ainstruct init             Deteksi stack proyek & scaffold yang cocok
   ainstruct init --dry-run   Laporan deteksi (tanpa perubahan)
   ainstruct init --template laravel --force   Paksa template tanpa deteksi
+  ainstruct status           Periksa kesehatan instruksi di pwd
+  ainstruct status --json    Laporan status JSON
   ainstruct template list    Daftar template (built-in & custom)
   ainstruct template clone mylaravel laravel   # customisasi built-in
   ainstruct reset laravel    Kembalikan ke default template lalu distribusikan
@@ -969,6 +978,263 @@ wipe_instructions() {
 }
 
 # ============================================================================
+# status — periksa kesehatan state instruksi AI di proyek konsumen (pwd).
+# TIDAK mengubah apa pun: laporkan template aktif, artefak yang hilang/drift,
+# lalu sarankan aksi perbaikan (distribute ulang / init). Cocok dipakai
+# automation/CI lewat --json (output murni JSON, bukan laporan berwarna).
+# ============================================================================
+status_usage() {
+    cat <<'STATUS_USAGE'
+status — periksa kesehatan state instruksi AI di direktori saat ini (pwd).
+Tidak mengubah apa pun; laporkan template aktif, artefak yang hilang atau
+berbeda dari master, dan langkah perbaikan.
+
+Usage:
+  ainstruct status             Laporan untuk manusia (berwarna)
+  ainstruct status --json      Laporan JSON (untuk automation/CI)
+
+Exit code: 0 = sehat (artefak lengkap & sinkron); 1 = ada masalah
+(belum didistribusikan / artefak hilang / tidak sinkron dengan master).
+STATUS_USAGE
+}
+
+# Escaping string JSON sederhana (portable — tanpa jq).
+json_str() {
+    printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+# Rangkai argumen menjadi array JSON inline:  a b  ->  "a", "b"
+json_array() {
+    local out="" x first=1
+    for x in "$@"; do
+        if [ "$first" -eq 1 ]; then
+            out="\"$(json_str "$x")\""
+            first=0
+        else
+            out="${out}, \"$(json_str "$x")\""
+        fi
+    done
+    printf '%s' "$out"
+}
+
+status_cmd() {
+    local json=0
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --json) json=1; shift ;;
+            help|-h|--help) status_usage; exit 0 ;;
+            *)
+                echo -e "${RED}❌ arg tak dikenal: $1${NC}" >&2
+                status_usage
+                exit 1
+                ;;
+        esac
+    done
+
+    local master_file="${TARGET_DIR}/ai-instructions/master/ai-instructions.md"
+    local master_mod_dir="${TARGET_DIR}/ai-instructions/master/ai-instructions"
+    local fw="" fw_dir="" fw_source="" dir f
+    local -a missing=() out_of_sync=()
+    local present=0 total=0 issues=0 module_drift=0 master_customized=0 oc=0
+
+    # opencode CLI — info; bukan failure (distribusi tetap valid tanpa CLI).
+    command -v opencode >/dev/null 2>&1 && oc=1
+
+    # --- Template aktif: bandingkan master dengan tiap template (custom menang) ---
+    if [ -f "$master_file" ]; then
+        if [ -d "${CONSUMER_TEMPLATES_DIR}" ]; then
+            for dir in "${CONSUMER_TEMPLATES_DIR}"/*/; do
+                if [ -f "$dir/ai-instructions.md" ] && cmp -s "$master_file" "${dir}/ai-instructions.md"; then
+                    fw="$(basename "$dir")"
+                    fw_dir="${dir%/}"
+                    fw_source="custom"
+                    break
+                fi
+            done
+        fi
+        if [ -z "$fw" ]; then
+            for dir in "${BUILTIN_TEMPLATES_DIR}"/*/; do
+                if [ -f "$dir/ai-instructions.md" ] && cmp -s "$master_file" "${dir}/ai-instructions.md"; then
+                    fw="$(basename "$dir")"
+                    fw_dir="${dir%/}"
+                    fw_source="builtin"
+                    break
+                fi
+            done
+        fi
+    fi
+
+    # Master custom = fitur normal (master boleh diedit), hanya dilaporkan — bukan failure.
+    if [ -f "$master_file" ]; then
+        if [ -n "$fw_dir" ]; then
+            cmp -s "$master_file" "${fw_dir}/ai-instructions.md" || master_customized=1
+        else
+            master_customized=1
+        fi
+    fi
+
+    # --- Artefak konstitusi yang seharusnya identik dengan master ---
+    local konst_files=(AGENTS.md CLAUDE.md GEMINI.md .cursorrules .windsurfrules .continuerules .github/copilot-instructions.md)
+    for f in "${konst_files[@]}"; do
+        total=$((total + 1))
+        if [ -f "${TARGET_DIR}/${f}" ]; then
+            present=$((present + 1))
+            if [ -f "$master_file" ] && ! cmp -s "${TARGET_DIR}/${f}" "$master_file"; then
+                out_of_sync+=("${f}")
+            fi
+        else
+            missing+=("${f}")
+        fi
+    done
+
+    # --- Cursor .mdc & Cline (nama file memuat framework aktif) ---
+    local mdc_path="" cline_path="" rel
+    if [ -n "$fw" ]; then
+        mdc_path="${TARGET_DIR}/.cursor/rules/${fw}-directives.mdc"
+        cline_path="${TARGET_DIR}/.clinerules/${fw}-directives.md"
+    else
+        mdc_path="$(find "${TARGET_DIR}/.cursor/rules" -maxdepth 1 -name '*-directives.mdc' 2>/dev/null | head -1 || true)"
+        cline_path="$(find "${TARGET_DIR}/.clinerules" -maxdepth 1 -name '*-directives.md' 2>/dev/null | head -1 || true)"
+    fi
+    for f in "$mdc_path" "$cline_path"; do
+        [ -n "$f" ] || continue
+        rel="${f#${TARGET_DIR}/}"
+        total=$((total + 1))
+        if [ -f "$f" ]; then
+            present=$((present + 1))
+            if [ -f "$master_file" ]; then
+                if [[ "$f" == *.mdc ]]; then
+                    # Frontmatter YAML 6 baris diikuti isi master.
+                    diff -q <(sed '1,6d' "$f") "$master_file" >/dev/null 2>&1 || out_of_sync+=("$rel")
+                else
+                    cmp -s "$f" "$master_file" || out_of_sync+=("$rel")
+                fi
+            fi
+        else
+            missing+=("$rel")
+        fi
+    done
+
+    # --- Artefak generated (cukup dicek keberadaannya) ---
+    for f in .aider.conf.yml opencode.json; do
+        total=$((total + 1))
+        if [ -e "${TARGET_DIR}/${f}" ]; then
+            present=$((present + 1))
+        else
+            missing+=("${f}")
+        fi
+    done
+
+    # --- Master konstitusi & modul ---
+    f="ai-instructions/master/ai-instructions.md"
+    total=$((total + 1))
+    if [ -f "${TARGET_DIR}/${f}" ]; then
+        present=$((present + 1))
+    else
+        missing+=("${f}")
+    fi
+    total=$((total + 1))
+    if [ -d "${TARGET_DIR}/ai-instructions" ] && [ -n "$(find "${TARGET_DIR}/ai-instructions" -maxdepth 1 -name '*.md' 2>/dev/null | head -1)" ]; then
+        present=$((present + 1))
+    else
+        missing+=("ai-instructions/ (modul)")
+    fi
+
+    # Master module vs modul terdistribusi. Baris 'Only in ...: master' (folder
+    # master/ hasil sync_master di dalam target) diabaikan; 'Files ... differ'
+    # tetap menjadi tanda drift. Output ditangkap dulu — grep -q langsung di
+    # pipeline akan kena SIGPIPE (grep -q menutup pipe lebih awal).
+    local diff_out=""
+    if [ -d "$master_mod_dir" ] && [ -d "${TARGET_DIR}/ai-instructions" ]; then
+        diff_out="$(diff -rq "$master_mod_dir" "${TARGET_DIR}/ai-instructions" 2>/dev/null | grep -v '^Only in .*: master$' || true)"
+        if [ -n "$diff_out" ]; then
+            module_drift=1
+        fi
+    fi
+
+    issues=$(( ${#missing[@]} + ${#out_of_sync[@]} + module_drift ))
+    local status_label="ok"
+    if [ ! -f "$master_file" ]; then
+        status_label="not-distributed"
+    elif [ "$issues" -gt 0 ]; then
+        status_label="needs-redistribute"
+    fi
+
+    if [ "$json" -eq 1 ]; then
+        printf '{\n'
+        printf '  "target_dir": "%s",\n' "$(json_str "$TARGET_DIR")"
+        printf '  "opencode_installed": %s,\n' "$([ "$oc" -eq 1 ] && printf 'true' || printf 'false')"
+        printf '  "active_template": %s,\n' "$([ -n "$fw" ] && printf '"%s"' "$(json_str "$fw")" || printf 'null')"
+        printf '  "template_source": %s,\n' "$([ -n "$fw" ] && printf '"%s"' "$(json_str "$fw_source")" || printf 'null')"
+        printf '  "master_exists": %s,\n' "$([ -f "$master_file" ] && printf 'true' || printf 'false')"
+        printf '  "master_customized": %s,\n' "$([ "$master_customized" -eq 1 ] && printf 'true' || printf 'false')"
+        printf '  "artifacts_present": %d,\n' "$present"
+        printf '  "artifacts_total": %d,\n' "$total"
+        printf '  "missing": [%s],\n' "$(json_array "${missing[@]}")"
+        printf '  "out_of_sync": [%s],\n' "$(json_array "${out_of_sync[@]}")"
+        printf '  "module_out_of_sync": %s,\n' "$([ "$module_drift" -eq 1 ] && printf 'true' || printf 'false')"
+        printf '  "issues": %d,\n' "$issues"
+        printf '  "status": "%s"\n' "$status_label"
+        printf '}\n'
+        if [ "$issues" -eq 0 ]; then return 0; else return 1; fi
+    fi
+
+    echo ""
+    echo -e "${BLUE}📋 Status Instruksi AI — ${TARGET_DIR}${NC}"
+    if [ -n "$fw" ]; then
+        echo -e "  ${YELLOW}Template aktif   :${NC} ${GREEN}${fw}${NC} (${fw_source})"
+        echo -e "  ${YELLOW}Sumber template  :${NC} ${fw_dir}"
+    elif [ -f "$master_file" ]; then
+        echo -e "  ${YELLOW}Template aktif   :${NC} ${YELLOW}master custom — tidak cocok template mana pun${NC}"
+    else
+        echo -e "  ${YELLOW}Template aktif   :${NC} — (belum didistribusikan)"
+    fi
+    if [ -f "$master_file" ]; then
+        echo -e "  ${YELLOW}Master           :${NC} ada$([ "$master_customized" -eq 1 ] && printf ' · custom (edit aman, dipertahankan)' || printf ' · default')"
+    else
+        echo -e "  ${YELLOW}Master           :${NC} ${RED}TIDAK ADA${NC}"
+    fi
+    echo -e "  ${YELLOW}opencode CLI     :${NC} $([ "$oc" -eq 1 ] && printf 'terpasang' || printf 'tidak terpasang (opsional)')"
+    echo ""
+    echo -e "  ${YELLOW}Artefak          :${NC} ${present}/${total} hadir"
+    if [ "${#missing[@]}" -gt 0 ]; then
+        echo -e "  ${RED}  ❌ Hilang:${NC}"
+        for f in "${missing[@]}"; do
+            echo -e "     - ${f}"
+        done
+    fi
+    if [ "${#out_of_sync[@]}" -gt 0 ]; then
+        echo -e "  ${YELLOW}  ⚠️  Berbeda dari master (diedit manual / belum di-redistribute):${NC}"
+        for f in "${out_of_sync[@]}"; do
+            echo -e "     - ${f}"
+        done
+    fi
+    if [ "$module_drift" -eq 1 ]; then
+        echo -e "  ${YELLOW}  ⚠️  Modul ai-instructions/ belum sinkron dengan master module.${NC}"
+    fi
+    echo ""
+    if [ "$issues" -eq 0 ]; then
+        echo -e "${GREEN}✅ Sehat — semua artefak hadir & sinkron dengan master.${NC}"
+        echo ""
+        return 0
+    fi
+    echo -e "${RED}⚠️  ${issues} masalah ditemukan.${NC}"
+    if [ ! -f "$master_file" ]; then
+        echo -e "${YELLOW}   Instruksi belum pernah didistribusikan di sini. Jalankan:${NC}"
+        echo -e "     ainstruct init          # deteksi otomatis"
+        echo -e "     ainstruct <framework>   # mis. ainstruct laravel"
+    else
+        echo -e "${YELLOW}   Sinkronkan ulang dari master (custom di ai-instructions/master/ dipertahankan):${NC}"
+        echo -e "     ainstruct ${fw:-<framework>}"
+    fi
+    echo ""
+    echo -e "${YELLOW}   DILARANG mengedit file hasil distribusi (mis. AGENTS.md) langsung —${NC}"
+    echo -e "${YELLOW}   edit ai-instructions/master/ lalu jalankan ulang.${NC}"
+    echo ""
+    return 1
+}
+
+# ============================================================================
 # Fungsi: Buat file Cursor .mdc dengan frontmatter
 # ============================================================================
 distribute_cursor_mdc() {
@@ -1051,10 +1317,23 @@ OP
 # MAIN
 # ============================================================================
 
-show_header
+# Header ditampilkan untuk semua perintah KECUALI status --json — agar output
+# status JSON tetap murni (dikonsumsi automation/CI).
+COMMAND="$(to_lower "${1:-}")"
+case "$COMMAND" in
+    status)
+        if [ "${2:-}" = "--json" ]; then
+            :
+        else
+            show_header
+        fi
+        ;;
+    *)
+        show_header
+        ;;
+esac
 
 # Parsing subcommand
-COMMAND="$(to_lower "${1:-}")"
 case "$COMMAND" in
     ""|distribute)
         FRAMEWORK="${2:-}"
@@ -1069,6 +1348,13 @@ case "$COMMAND" in
         shift
         wipe_instructions "$@"
         exit 0
+        ;;
+    status)
+        shift
+        if status_cmd "$@"; then
+            exit 0
+        fi
+        exit 1
         ;;
     template)
         shift

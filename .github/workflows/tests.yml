@@ -182,4 +182,39 @@ jobs:
           grep -q 'Template scaffold' "$CUST/AGENTS.md" \
             || { echo "FAIL: AGENTS.md bukan dari template custom"; exit 1; }
 
+          # --- status: laporan kesehatan state instruksi ---
+          # AINSTRUCT_HOME di-isolasi ulang — template shadow dari section
+          # template-manager/init (blank, laravel scaffold) tidak boleh
+          # mencemari deteksi template aktif di section status.
+          export AINSTRUCT_HOME="$TMP/ahome-status"
+          SDIR="$TMP/status"
+          mkdir -p "$SDIR"
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" laravel >/dev/null )
+          # proyek sehat: template terdeteksi, artefak lengkap, exit 0
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status | grep 'laravel' >/dev/null ) \
+            || { echo "FAIL: status tidak melaporkan template laravel"; exit 1; }
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status >/dev/null ) \
+            || { echo "FAIL: status di proyek sehat harus exit 0"; exit 1; }
+          # JSON murni (tanpa header): status ok + template terdeteksi
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status --json | grep -q '"status": "ok"' ) \
+            || { echo "FAIL: status --json tidak melaporkan ok"; exit 1; }
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status --json | grep -q '"active_template": "laravel"' ) \
+            || { echo "FAIL: status --json tidak melaporkan laravel"; exit 1; }
+          # drift: edit AGENTS.md langsung → status mendeteksi & exit 1
+          printf '\n# EDITED\n' >> "$SDIR/AGENTS.md"
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status >/dev/null 2>&1 ) \
+            && { echo "FAIL: status harus mendeteksi AGENTS.md drift"; exit 1; }
+          # status exit 1 (drift) → tangkap output dulu; pipefail CI akan
+          # membalik exit pipeline bila status digabung langsung dengan grep.
+          ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" status 2>&1 || true ) \
+            | grep 'AGENTS.md' >/dev/null \
+            || { echo "FAIL: status tidak menyebut AGENTS.md sebagai drift"; exit 1; }
+          # belum didistribusikan: proyek kosong → masalah & exit 1
+          mkdir -p "$TMP/status-empty"
+          ( cd "$TMP/status-empty" && "$TMP/bin/setup-ai-rules.sh" status >/dev/null 2>&1 ) \
+            && { echo "FAIL: status di proyek tanpa instruksi harus exit 1"; exit 1; }
+          ( cd "$TMP/status-empty" && "$TMP/bin/setup-ai-rules.sh" status 2>&1 || true ) \
+            | grep 'belum' >/dev/null \
+            || { echo "FAIL: status tidak menyebut belum didistribusikan"; exit 1; }
+
           echo "smoke test: PASS"

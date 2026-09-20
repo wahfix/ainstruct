@@ -125,11 +125,39 @@ proyek konsumen** (dieksekusi dari root proyek konsumen, arah `pwd`):
 
 Keduanya dijalankan dari root proyek konsumen — **bukan** dari repo authoring ini.
 
+## Status: Periksa Kesehatan Instruksi
+
+`ainstruct status` memeriksa state instruksi AI di direktori saat ini (pwd) **tanpa
+mengubah apa pun** — laporkan template aktif, artefak yang hilang atau berbeda dari
+master, dan langkah perbaikan. Filosofinya sama dengan `git status`: tahu kondisi
+sebelum bertindak.
+
+```bash
+ainstruct status             # laporan untuk manusia (berwarna)
+ainstruct status --json      # laporan JSON murni (untuk automation/CI)
+```
+
+- **Template aktif** — template mana yang master-nya cocok (custom menang atas
+  built-in bila sama), plus sumber direktori; master yang di-custom ditandai
+  sebagai `custom` (fitur normal — edit aman, dipertahankan saat redistribute).
+- **Artefak** — semua file hasil distribusi dicek hadir & sinkron dengan master
+  (AGENTS.md, CLAUDE.md, GEMINI.md, `.cursorrules`, `.windsurfrules`,
+  `.continuerules`, `.github/copilot-instructions.md`, Cursor `.mdc`, Cline,
+  `.aider.conf.yml`, `opencode.json`, dan modul `ai-instructions/`).
+- **Exit code untuk automation**: `0` = sehat (artefak lengkap & sinkron), `1` =
+  ada masalah (belum didistribusikan / artefak hilang / tidak sinkron).
+- **Deteksi manual edit**: file hasil distribusi yang diedit langsung (mis.
+  `AGENTS.md`) terdeteksi sebagai *out of sync* — perbaikan dengan
+  `ainstruct <framework>` (custom di `ai-instructions/master/` tetap dipertahankan).
+
+Contoh pemakaian dalam CI: jalankan `ainstruct status --json`, lalu gagalkan build
+bila `"status"` bukan `"ok"` — setiap proyek selalu punya instruksi yang sinkron.
+
 ## Adaptor: curl | sh, Composer, npm/npx
 
 Repo ini menyediakan tiga adaptor agar `bin/setup-ai-rules.sh` (alias `ainstruct`) bisa dipakai
 langsung di **proyek konsumen** (arah `pwd`) tanpa menyalin repo secara manual. Semua adapter
-menjalankan fungsi yang sama: `distribute`, `reset`, `wipe`, `init`, `template`.
+menjalankan fungsi yang sama: `distribute`, `reset`, `wipe`, `status`, `init`, `template`.
 
 ### 1. curl | sh (tanpa instalasi)
 
