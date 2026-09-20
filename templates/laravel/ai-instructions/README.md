@@ -54,7 +54,7 @@ The system separates **universal rules** (apply to every project) from **project
 When creating or updating instruction sets in this repository, treat the **`templates/laravel/` set as the
 reference template**: mirror its constitution layout, module split (`01`–`11`, `13`–`21`,
 `12-project-specific/`), precision, and source-anchored verbatim snippets
-(`canonical-snippets.md`). Always re-run `ainstruct <framework>` (or `./bin/setup-ai-rules.sh <framework>`
+(`canonical-snippets.md`). Always re-run `ainstruct <framework>` (or `./bin/ainstruct <framework>`
 after removing the stale `ai-instructions/master`) so template, master, and distributed copies stay identical.
 
 ## Adding a New Project

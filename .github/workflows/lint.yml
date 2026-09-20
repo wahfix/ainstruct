@@ -25,5 +25,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - run: shellcheck --severity=warning scripts/health-check.sh scripts/antislop-check.sh scripts/install-hooks.sh .githooks/pre-commit bin/setup-ai-rules.sh bin/ainstruct bin/install.sh
+      - run: shellcheck --severity=warning scripts/health-check.sh scripts/antislop-check.sh scripts/install-hooks.sh .githooks/pre-commit
         name: shellcheck shell scripts
+
+  php:
+    runs-on: ubuntu-latest
+    name: PHP lint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+        name: composer install
+      - run: composer validate
+        name: composer validate
+      - run: php -l bin/ainstruct && find src tests -name '*.php' -not -path '*/Fixtures/*' -exec php -l {} \;
+        name: php -l
+      - run: vendor/bin/pint --test
+        name: pint --test
+      - run: vendor/bin/phpstan analyse --no-progress
+        name: phpstan analyse

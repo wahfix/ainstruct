@@ -4,7 +4,7 @@ namespace Lace\Ainstruct\Values;
 
 /**
  * Hasil pemeriksaan status. Field publik mengikuti kontrak JSON
- * `ainstruct status --json` (lihat setup-ai-rules.sh) ditambah
+ * `ainstruct status --json` (spesifikasi CLI ainstruct) ditambah
  * templateDir untuk laporan human (tidak ikut JSON).
  */
 final class InstructionStatus

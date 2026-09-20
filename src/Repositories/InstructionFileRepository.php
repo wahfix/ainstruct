@@ -86,7 +86,7 @@ final class InstructionFileRepository implements InstructionFileRepositoryContra
     public function createAiderConfig(string $target, string $moduleSourceDir, string $frameworkName): void
     {
         $content = "# {$frameworkName} — Aider Configuration\n";
-        $content .= "# File ini otomatis di-generate oleh setup-ai-rules.sh\n\n";
+        $content .= "# File ini otomatis di-generate oleh ainstruct\n\n";
         $content .= "read:\n";
 
         foreach (glob($moduleSourceDir.DIRECTORY_SEPARATOR.'*.md') ?: [] as $file) {

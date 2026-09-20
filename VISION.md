@@ -14,7 +14,7 @@ LAPISAN 1 — ARTEFAK (yang dikonsumsi proyek konsumen)
 LAPISAN 2 — PABRIK (yang memproduksi & menjaga lapisan 1)
 ├── AGENTS.md        self-instruction arsitek (peran, larangan, aturan git)
 ├── ARCHITECT-GUIDE.md   playbook authoring (wajib dibaca penuh)
-├── bin/             ainstruct + setup-ai-rules.sh + install.sh (HANYA di proyek konsumen)
+├── bin/             ainstruct (engine PHP — paket Composer lace/ainstruct) (HANYA di proyek konsumen)
 ├── scripts/         health-check, install-hooks
 └── .github/workflows/  CI: markdownlint, shellcheck, integrity, smoke test, meta
 
@@ -47,15 +47,15 @@ diri sendiri.
 
 ```
 DIPRODUKSI → DIUJI → DIDISTRIBUSIKAN → DIADAPTASI → DIINGAT
-   authoring    health-check    bin/setup-ai-rules.sh   master/ custom   operator-memory
-                + CI            (proyek konsumen)        per proyek      (per salinan, per operator)
+   authoring    health-check       bin/ainstruct         master/ custom   operator-memory
+                + CI               (proyek konsumen)     per proyek      (per salinan, per operator)
 ```
 
 1. **Diproduksi** — set instruksi dibuat/diperbarui di `templates/<Framework>/` (L1) memakai
    playbook `ARCHITECT-GUIDE.md` (L2).
 2. **Diuji** — setiap perubahan harus lolos `scripts/health-check.sh`, markdownlint,
    shellcheck, dan smoke test distribusi (L2; CI di `.github/workflows/`).
-3. **Didistribusikan** — `bin/setup-ai-rules.sh` / adaptor (curl|sh, Composer, npm)
+3. **Didistribusikan** — `bin/ainstruct` (CLI Composer `lace/ainstruct`)
    menebar set ke proyek konsumen; konsumen bisa men-custom via
    `ai-instructions/master/` atau `template` miliknya.
 4. **Diadaptasi** — setiap fondasi itu hidup di banyak lingkungan; nilai akhirnya
@@ -72,7 +72,7 @@ DIPRODUKSI → DIUJI → DIDISTRIBUSIKAN → DIADAPTASI → DIINGAT
   semua salinan; memori & kepribadian berbeda per operator. Tidak ada data operator
   yang saling menimpa — `operator-memory/backup.sh` selalu menarik lalu menggabungkan.
 - **Batasan tetap berlaku**: repo ini BUKAN proyek konsumen; artefak distribusi
-  tidak pernah di-commit ke sini; `main` dilindungi (lewat PR); `bin/setup-ai-rules.sh`
+  tidak pernah di-commit ke sini; `main` dilindungi (lewat PR); `bin/ainstruct`
   hanya dijalankan di root proyek konsumen.
 - **Kejujuran skala**: lapisan meta adalah investasi — nilainya terukur dari
   seberapa presisi instruksi yang diproduksi dan seberapa mulus adaptasi per operator.

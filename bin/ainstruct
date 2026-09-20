@@ -1,40 +1,42 @@
-#!/usr/bin/env bash
-# ============================================================================
-# AINSTRUCT — AI Instructions CLI (entrypoint universal)
-# ============================================================================
-# Titik masuk untuk semua adaptor:
-#   - Composer bin  : lace/ainstruct            → vendor/bin/ainstruct
-#   - npm / npx bin : @lace/ainstruct           → node_modules/.bin/ainstruct
-#   - Langsung      : ./bin/ainstruct <args>
-#
-# Delegasi ke bin/setup-ai-rules.sh di direktori akar paket; arah kerja tetap pwd
-# (proyek konsumen). Path sendiri di-resolve melalui symlink sehingga bin yang
-# dipasang composer/npx menemukan direktori akar paket yang benar.
-# ============================================================================
+#!/usr/bin/env php
+<?php
 
-set -euo pipefail
+/**
+ * AINSTRUCT — AI Instructions CLI (entrypoint final, Composer bin).
+ *
+ * Paket `lace/ainstruct` memasang bin ini sebagai `vendor/bin/ainstruct`.
+ * Arah kerja tetap `pwd` (root proyek konsumen); template built-in di-baca
+ * dari direktori akar paket. Autoload di-resolve untuk dua tata letak:
+ *   - checkout pengembangan repo : bin/../vendor/autoload.php
+ *   - terpasang sebagai dependency : vendor/lace/ainstruct/bin/ainstruct
+ *     → vendor/../../../autoload.php (setara vendor/autoload.php)
+ */
 
-SELF="${BASH_SOURCE[0]}"
+use Illuminate\Container\Container;
+use Lace\Ainstruct\Application;
+use Lace\Ainstruct\Bootstrap\AppServiceProvider;
 
-# Pastikan SELF berupa path (bila dipanggil via PATH dengan nama bare saja).
-case "$SELF" in
-    */*) : ;;
-    *) SELF="$(command -v "$SELF" 2>/dev/null || printf '%s' "$SELF")" ;;
-esac
+$autoloadCandidates = [
+    __DIR__.'/../vendor/autoload.php',
+    __DIR__.'/../../../autoload.php',
+];
 
-# Resolve symlink (vendor/bin/ainstruct -> ../lace/ainstruct/bin/ainstruct).
-if command -v readlink >/dev/null 2>&1; then
-    _ln=0
-    while [ -L "$SELF" ] && [ "$_ln" -lt 32 ]; do
-        _TARGET="$(readlink "$SELF")"
-        case "$_TARGET" in
-            /*) SELF="$_TARGET" ;;
-            *) SELF="$(cd "$(dirname "$SELF")" && pwd)/$_TARGET" ;;
-        esac
-        _ln=$((_ln + 1))
-    done
-fi
+$autoloaded = false;
 
-BIN_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+foreach ($autoloadCandidates as $file) {
+    if (is_file($file)) {
+        require $file;
+        $autoloaded = true;
+        break;
+    }
+}
 
-exec "${BIN_DIR}/setup-ai-rules.sh" "$@"
+if (! $autoloaded) {
+    fwrite(STDERR, "Unable to find the Composer autoloader. Run `composer install` first.\n");
+    exit(1);
+}
+
+$container = new Container;
+(new AppServiceProvider($container))->register();
+
+exit((new Application($container))->run(array_slice($argv, 1)));

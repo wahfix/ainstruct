@@ -1,4 +1,4 @@
-# Artefak hasil distribusi bin/setup-ai-rules.sh (alias ainstruct) — hanya untuk proyek konsumen,
+# Artefak hasil distribusi bin/ainstruct (alias ainstruct) — hanya untuk proyek konsumen,
 # DILARANG di-commit ke repository authoring ini.
 /ai-instructions/
 CLAUDE.md
@@ -39,6 +39,8 @@ opencode.json
 !.opencode/skills/antislop-layoutmobile/SKILL.md
 !.opencode/skills/antislop-ui/
 !.opencode/skills/antislop-ui/SKILL.md
+# Work-notes (checkpoint kerja) tidak pernah di-commit.
+.opencode/work-notes/
 
 # Tooling paket (composer / npm) — jangan di-commit.
 /vendor/

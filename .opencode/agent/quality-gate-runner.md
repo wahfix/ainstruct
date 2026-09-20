@@ -1,5 +1,5 @@
 ---
-description: Subagent tim authoring — menjalankan & melaporkan quality gates: health-check, markdownlint, bash -n, shellcheck, smoke test distribusi. Use when the team must verify all quality gates pass before marking work done.
+description: Subagent tim authoring — menjalankan & melaporkan quality gates: health-check, markdownlint, PHP checks (php -l, pint, phpstan, phpunit), smoke test distribusi. Use when the team must verify all quality gates pass before marking work done.
 mode: subagent
 color: success
 ---
@@ -14,11 +14,15 @@ apa yang TIDAK dijalankan.
 
 1. **Integritas instruksi**: `bash scripts/health-check.sh` (0 kegagalan wajib).
 2. **Lint markdown**: `npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml '**/*.md'`.
-3. **Sintaks shell**: `bash -n` untuk `bin/setup-ai-rules.sh`, `scripts/*.sh`,
-   `bin/*`, `bin/ainstruct`.
-4. **Shellcheck**: `shellcheck bin/setup-ai-rules.sh scripts/*.sh bin/install.sh bin/*`
-5. **Smoke test distribusi**: jalankan alur `bin/setup-ai-rules.sh` di temp dir
-   (mirip `.github/workflows/tests.yml`) bila relevan terhadap perubahan.
+3. **PHP (engine CLI `bin/ainstruct`)**: `php -l` untuk `bin/ainstruct` dan seluruh
+   `src/*.php`/`tests/*.php` (kecuali Fixtures); `vendor/bin/pint --test`;
+   `vendor/bin/phpstan analyse --no-progress`; `vendor/bin/phpunit`.
+4. **Sintaks shell**: `bash -n` untuk `scripts/*.sh`, `.githooks/pre-commit`,
+   `operator-memory/*.sh`.
+5. **Shellcheck**: `shellcheck scripts/*.sh .githooks/pre-commit operator-memory/*.sh`.
+6. **Smoke test distribusi**: jalankan `php bin/ainstruct <subcommand>` di temp dir
+   konsumen (mirip `.github/workflows/tests.yml`) bila relevan terhadap perubahan —
+   arah kerja `pwd`, `AINSTRUCT_HOME` di-isolasi.
 
 ## Metode kerja
 
@@ -36,6 +40,7 @@ QUALITY GATES
 |-------------------|----------------------------------------|---------|
 | health-check      | ...                                    | ...     |
 | markdownlint      | ...                                    | ...     |
+| php -l / pint / phpstan / phpunit | ...                         | ...     |
 | bash -n           | ...                                    | ...     |
 | shellcheck        | ...                                    | ...     |
 | smoke test        | ...                                    | ...     |

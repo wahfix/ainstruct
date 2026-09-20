@@ -1,4 +1,4 @@
-# File yang TIDAK ikut dalam distribusi paket (curl|sh, composer, npm).
+# File yang TIDAK ikut dalam distribusi paket (composer dist / git archive).
 # Berlaku untuk git archive / tarball GitHub (codeload) / composer dist.
 /.github/ export-ignore
 /.gitattributes export-ignore

@@ -16,9 +16,9 @@ jobs:
     name: Shell syntax
     steps:
       - uses: actions/checkout@v4
-      - name: bash -n all operator-memory + bin scripts
+      - name: bash -n all operator-memory + scripts
         run: |
-          for s in operator-memory/*.sh bin/*.sh bin/ainstruct; do
+          for s in operator-memory/*.sh scripts/*.sh; do
             echo "--- $s ---"
             bash -n "$s" || exit 1
           done
