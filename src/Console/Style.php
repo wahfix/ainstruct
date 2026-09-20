@@ -102,28 +102,16 @@ final class Style
     }
 
     /**
-     * Panel header brand (motif lambda) — dipakai command utama.
+     * Baris header brand (motif lambda) — dipakai command utama.
      */
     public function panel(string $title, string $subtitle = '', string $version = ''): void
     {
         $mark = 'Λ';
-        $titleLine = ' '.$this->cyan($mark).' '.$this->bold($title).($version !== '' ? '  '.$this->dim($version) : '');
-        $contentWidth = max(
-            $this->visibleWidth($titleLine),
-            $subtitle !== '' ? $this->visibleWidth(' '.$subtitle) : 0
-        );
-
-        $border = '╭'.str_repeat('─', $contentWidth + 2).'╮';
-        $bottom = '╰'.str_repeat('─', $contentWidth + 2).'╯';
-
-        $this->line($this->cyan($border));
-        $this->line($this->cyan('│').$this->padRight($titleLine, $contentWidth).$this->cyan(' │'));
+        $this->line(' '.$this->cyan($mark).' '.$this->bold($title).($version !== '' ? '  '.$this->dim($version) : ''));
 
         if ($subtitle !== '') {
-            $this->line($this->cyan('│').' '.$this->padRight($subtitle, $contentWidth - 1).$this->cyan(' │'));
+            $this->line(' '.$subtitle);
         }
-
-        $this->line($this->cyan($bottom));
     }
 
     /**
@@ -292,11 +280,6 @@ final class Style
     private function visibleWidth(string $text): int
     {
         return strlen((string) preg_replace('/\033\[[0-9;]*m/', '', $text));
-    }
-
-    private function padRight(string $text, int $width): string
-    {
-        return $text.str_repeat(' ', max(0, $width - $this->visibleWidth($text)));
     }
 
     /**
