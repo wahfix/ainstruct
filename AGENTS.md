@@ -5,7 +5,7 @@
 > Repository ini BUKAN proyek konsumen teknologi apapun — ini adalah **mesin adaptif
 > (proyek meta)** dengan tiga lapisan: (1) **artefak** — set instruksi (`templates/<Framework>/`),
 > (2) **pabrik** — authoring, quality gates, CI, distribusi (`AGENTS.md`,
-> `ARCHITECT-GUIDE.md`, `bin/setup-ai-rules.sh`, `scripts/`), dan (3) **mesin adaptif** —
+> `ARCHITECT-GUIDE.md`, `bin/ainstruct`, `scripts/`), dan (3) **mesin adaptif** —
 > `operator-memory/` (mekanisme per-salinan: persona operator + memori + sync dua arah).
 > Peran Anda: memproduksi set instruksi presisi dari proyek/kerangka acuan, memelihara
 > pabrik yang menguji/mendistribusikannya, dan menjaga mesin adaptif tetap sehat.
@@ -20,8 +20,8 @@
 
 ## 2. LARANGAN MUTLAK (KEGAGALAN TOTAL)
 
-- **DILARANG menjalankan `./bin/setup-ai-rules.sh` di root repository AI-Instructions ini.**
-  Script itu hanya untuk root **proyek konsumen** (mis. `/home/ubuntu/Project/WahyuLingu/lingusid`).
+- **DILARANG menjalankan `./bin/ainstruct` di root repository AI-Instructions ini.**
+  CLI itu hanya untuk root **proyek konsumen** (mis. `/home/ubuntu/Project/WahyuLingu/lingusid`).
   Menjalankannya di sini MENIMPA instruksi khusus AI repositori ini (AGENTS.md dan
   file hasil distribusi di root) dengan isi hasil generate = **KESALAHAN KRITIS, KEGAGALAN TOTAL**.
 - DILARANG men-commit artefak hasil distribusi (`AGENTS.md` berisi isi hasil-generate,
@@ -39,7 +39,7 @@ AI-Instructions/
 ├── AGENTS.md            ← File ini (self-instruction arsitek)
 ├── ARCHITECT-GUIDE.md   ← Playbook (wajib dibaca penuh)
 ├── VISION.md            ← Visi meta: mesin adaptif tiga lapisan
-├── bin/                 ← CLI & distribusi: ainstruct, setup-ai-rules.sh, install.sh
+├── bin/                 ← CLI & distribusi: ainstruct (engine PHP — paket Composer lace/ainstruct)
 ├── scripts/             ← Quality gates: health-check, antislop-check, install-hooks
 ├── .gitignore           ← Mencegah artefak distribusi ter-commit
 ├── operator-memory/     ← Mesin adaptif: skill + memori + backup dua arah per-salinan
@@ -87,8 +87,10 @@ pekerjaan dokumentasi instruksi; rincian penuh ada di modul yang dirujuk):
 2. **Quality gates sebelum "selesai"** — sebuah tugas authoring dianggap selesai hanya bila
    semua check yang dijalankan CI lulus secara lokal (local parity): `bash scripts/health-check.sh`,
    `npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml '**/*.md'`, dan `bash -n` untuk
-   script. Senior self-review: baca diff sebagai reviewer, bukan sebagai penulis; setiap klaim
-   "sudah diverifikasi" disertai bukti command yang dijalankan. Rujukan:
+   script shell; untuk perubahan yang menyentuh engine CLI (`bin/ainstruct`, `src/`, `tests/`)
+   tambah `php -l`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, dan
+   `vendor/bin/phpunit`. Senior self-review: baca diff sebagai reviewer, bukan sebagai penulis;
+   setiap klaim "sudah diverifikasi" disertai bukti command yang dijalankan. Rujukan:
    `templates/laravel/ai-instructions/10-quality-gates.md` — Senior Self-Review Rubric.
 3. **Edge probes authoring** — sebelum PR, probe daftar ini: (a) setiap backtick `*.md`/`*.sh`
    yang dirujuk resolve ke file yang ada; (b) file instruksi baru ter-track (`.gitignore`
@@ -132,8 +134,8 @@ pekerjaan dokumentasi instruksi; rincian penuh ada di modul yang dirujuk):
 - Pre-commit hook `.githooks/pre-commit` menjalankan `scripts/health-check.sh --quiet` (lint
   markdown di-skip anggun bila `markdownlint-cli2` tidak terpasang); aktif via
   `bash scripts/install-hooks.sh`.
-- CI `lint` (markdownlint + shellcheck), `tests` (Instruction integrity + Distribution smoke
-  test), dan `meta` (operator-memory toolkit: shell syntax, template integrity, bootstrap,
-  backup/restore) adalah status checks wajib pada branch protection `main`.
+- CI `lint` (markdownlint + shellcheck + PHP lint), `tests` (Instruction integrity +
+  Distribution smoke test), dan `meta` (operator-memory toolkit: shell syntax, template
+  integrity, bootstrap, backup/restore) adalah status checks wajib pada branch protection `main`.
 - Health-check umumnya bertambah jumlahnya tiap adopsi; aturan ini tidak mengharuskan angka
   tetap, tapi mengharuskan 0 kegagalan.

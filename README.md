@@ -17,11 +17,11 @@ dan siklus hidup instruksi.
 
 ## Repo Ini Bukan Tempat Distribusi
 
-`bin/setup-ai-rules.sh` (alias `ainstruct`) menjalankan distribusi ke **arah `pwd`** (direktori tempat script
-dieksekusi). Menjalankannya di repo ini akan menimpa `AGENTS.md` (self-instruction arsitek)
+`ainstruct` (engine PHP di `bin/ainstruct`, paket Composer `lace/ainstruct`) menjalankan distribusi
+ke **arah `pwd`** (direktori tempat CLI dieksekusi). Menjalankannya di repo ini akan menimpa `AGENTS.md` (self-instruction arsitek)
 dan memunculkan artefak distribusi (`CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `ai-instructions/`,
 dll.) di root dengan isi hasil-generate. **Itu KESALAHAN KRITIS — KEGAGALAN TOTAL.**
-Script hanya dijalankan di root **proyek konsumen**.
+CLI hanya dijalankan di root **proyek konsumen**.
 
 ## Layout Repository
 
@@ -30,7 +30,7 @@ AI-Instructions/
 ├── AGENTS.md            ← Self-instruction arsitek (peran, larangan, aturan git)
 ├── ARCHITECT-GUIDE.md   ← Playbook (wajib dibaca penuh sebelum bekerja)
 ├── VISION.md            ← Visi meta: mesin adaptif tiga lapisan (artefak→pabrik→adaptif)
-├── bin/                 ← CLI & distribusi: ainstruct, setup-ai-rules.sh, install.sh
+├── bin/                 ← CLI & distribusi: ainstruct (engine PHP — paket Composer lace/ainstruct)
 ├── scripts/             ← Quality gates: health-check, antislop-check, install-hooks
 ├── .gitignore           ← Mencegah artefak distribusi ter-commit ke repo ini
 ├── .opencode/           ← SELF-HOSTING: skill anti-slop + team-authoring + agent plenger
@@ -61,8 +61,8 @@ AI-Instructions/
    ```bash
    # di root proyek konsumen (mis. /home/ubuntu/Project/WahyuLingu/lingusid)
    ainstruct laravel
-   # atau langsung dari salinan repo ini:
-   ./bin/setup-ai-rules.sh laravel
+   # atau langsung dari checkout repo ini (setelah composer install):
+   ./bin/ainstruct laravel
    ```
 
    Script menyalin konstitusi ke `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
@@ -102,7 +102,7 @@ AI-Instructions/
 
 ## Reset & Wipe di Proyek Konsumen
 
-`bin/setup-ai-rules.sh` (alias `ainstruct`) juga mendukung dua perintah untuk mengelola state instruksi **di
+`ainstruct` juga mendukung dua perintah untuk mengelola state instruksi **di
 proyek konsumen** (dieksekusi dari root proyek konsumen, arah `pwd`):
 
 - **Reset ke default** — buang seluruh custom di `ai-instructions/master/`, bangun ulang
@@ -153,46 +153,25 @@ ainstruct status --json      # laporan JSON murni (untuk automation/CI)
 Contoh pemakaian dalam CI: jalankan `ainstruct status --json`, lalu gagalkan build
 bila `"status"` bukan `"ok"` — setiap proyek selalu punya instruksi yang sinkron.
 
-## Adaptor: curl | sh, Composer, npm/npx
+## Adaptor: Composer (satu-satunya kanal distribusi)
 
-Repo ini menyediakan tiga adaptor agar `bin/setup-ai-rules.sh` (alias `ainstruct`) bisa dipakai
-langsung di **proyek konsumen** (arah `pwd`) tanpa menyalin repo secara manual. Semua adapter
-menjalankan fungsi yang sama: `distribute`, `reset`, `wipe`, `status`, `init`, `template`.
-
-### 1. curl | sh (tanpa instalasi)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/wahfix/ainstruct/main/bin/install.sh | sh -s -- laravel
-```
-
-Unduhan tarball di-cache (`${XDG_CACHE_HOME:-$HOME/.cache}/ainstruct`), lalu
-`bin/setup-ai-rules.sh` dieksekusi dari cache terhadap direktori saat ini. Opsi:
-`AINSTRUCT_SOURCE_URL` (sumber tarball), `AINSTRUCT_CACHE` (direktori cache),
-`AINSTRUCT_UPDATE=1` (paksa unduh ulang).
-
-### 2. Composer (binary global)
+CLI `ainstruct` didistribusikan sebagai **paket Composer** `lace/ainstruct`. Repo ini
+menyediakan satu adaptor agar CLI bisa dipakai **langsung di proyek konsumen** (arah `pwd`)
+tanpa menyalin repo secara manual. Semua subcommand berfungsi sama: `distribute`, `reset`,
+`wipe`, `status`, `init`, `template`.
 
 ```bash
 composer global require lace/ainstruct
 ainstruct laravel          # distribusikan framework
 ainstruct reset laravel    # kembali ke default template
 ainstruct wipe --force     # hapus semua artefak instruksi
+ainstruct status --json    # laporan JSON untuk automation/CI
 ```
 
 Paket `lace/ainstruct` memasang bin `ainstruct` (symlink `vendor/bin/ainstruct`
-→ `bin/ainstruct`, yang me-resolve path akar paket lalu mendelegasikan ke
-`bin/setup-ai-rules.sh`).
-
-### 3. npm / npx (scope `@lace`)
-
-```bash
-npx @lace/ainstruct laravel
-npx @lace/ainstruct reset laravel
-npx @lace/ainstruct wipe --force
-```
-
-Paket `@lace/ainstruct` (scope `@lace` bila tersedia) membungkus `bin/ainstruct`
-yang sama dengan paket Composer.
+→ `bin/ainstruct`, entry PHP yang me-resolve autoload & path akar paket). Untuk
+pengembangan, repo ini juga bisa dipakai langsung: `composer install`, lalu
+`./bin/ainstruct <subcommand>`.
 
 ## Init: Deteksi Stack & Scaffold Otomatis
 
@@ -303,7 +282,7 @@ Setiap set WAJIB memuat KLAUSA 1–5 (detail penuh di `ARCHITECT-GUIDE.md` bagia
 
 ## Larangan Mutlak (di Repo Ini)
 
-- **DILARANG** menjalankan `./bin/setup-ai-rules.sh` di root repo ini.
+- **DILARANG** menjalankan `./bin/ainstruct` di root repo ini.
 - **DILARANG** men-commit artefak distribusi (AGENTS.md isi hasil-generate, CLAUDE.md,
   GEMINI.md, .cursorrules, .windsurfrules, .continuerules, .clinerules/, .cursor/rules/,
   .github/, .aider.conf.yml, ai-instructions/) ke repo ini.

@@ -31,7 +31,7 @@ interface InstructionFileRepositoryContract
 
     /**
      * Tulis .cursor/rules/<framework>-directives.mdc: frontmatter YAML 6 baris
-     * lalu isi master (kontrak bash setup-ai-rules.sh).
+     * lalu isi master (kontrak distribusi ainstruct).
      */
     public function distributeCursorMdc(string $source, string $target, string $frameworkLower): void;
 

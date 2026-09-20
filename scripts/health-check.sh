@@ -13,7 +13,7 @@
 #      pola marketing/AI-slop (buzzword, klaim tanpa bukti, frase generik).
 #
 # Frameworks are auto-discovered: any non-hidden directory under templates/
-# that contains an ai-instructions.md marker file (mirrors setup-ai-rules.sh).
+# that contains an ai-instructions.md marker file (mirrors ainstruct).
 #
 # Usage: scripts/health-check.sh [--quiet]
 # Exit code 0 = all checks pass; non-zero = violations found.
@@ -116,7 +116,7 @@ for token in "${refs[@]}"; do
     fi
   done
 
-  # Repo-root fallback (setup-ai-rules.sh, etc.).
+  # Repo-root fallback (scripts, bin, etc.).
   if [[ -z "$resolved" && -f "$token" ]]; then
     resolved="$token"
   fi

@@ -6,7 +6,7 @@
 > yang sudah jadi.
 >
 > Repository AI-Instructions ini adalah **bengkel authoring**, BUKAN proyek konsumen.
-> DILARANG KERAS menjalankan `./bin/setup-ai-rules.sh` di root repository ini — script hanya
+> DILARANG KERAS menjalankan `./bin/ainstruct` di root repository ini — CLI hanya
 > untuk root proyek konsumen; menjalankannya di sini menimpa AGENTS.md (self-instruction)
 > dan memunculkan artefak distribusi di root dengan isi hasil generate = **KEGAGALAN TOTAL**
 > (selengkapnya di bagian 10 & 11).
@@ -54,7 +54,7 @@ authoring. Misi Anda mencakup tiga lapisan (visi penuh: `VISION.md` di root):
 
 1. **L1 — Artefak**: memproduksi/memelihara set instruksi (`templates/laravel/`, ...).
 2. **L2 — Pabrik**: memelihara mesin yang memproduksi & menguji L1 — `AGENTS.md`,
-   `ARCHITECT-GUIDE.md`, `bin/setup-ai-rules.sh`, `scripts/health-check.sh`, CI.
+   `ARCHITECT-GUIDE.md`, `bin/ainstruct`, `scripts/health-check.sh`, CI.
 3. **L3 — Mesin adaptif**: memelihara `operator-memory/` — mekanisme per-salinan yang
    membuat setiap salinan repo me-bootstrap persona operatornya sendiri (skill + memori
    di `~/.config/opencode/...` + repo privat GitHub + sinkronisasi dua arah via
@@ -75,7 +75,7 @@ Anda bekerja di dalam folder root system instruksi AI:
 /home/ubuntu/Project/WahFix/AI-Instructions/
 ├── AGENTS.md                   ← Self-instruction Anda (pointer ke playbook + larangan)
 ├── ARCHITECT-GUIDE.md          ← File ini (playbook Anda)
-├── bin/                        ← CLI & distribusi: ainstruct, setup-ai-rules.sh, install.sh (HANYA proyek konsumen)
+├── bin/                        ← CLI & distribusi: ainstruct (engine PHP — paket Composer lace/ainstruct) (HANYA proyek konsumen)
 ├── scripts/                    ← Quality gates (health-check, antislop-check, install-hooks)
 ├── .gitignore                  ← Mencegah artefak distribusi ter-commit
 └── templates/<Framework>/      ← Satu folder per repository/framework yang telah dianalisis
@@ -603,18 +603,16 @@ Setelah set instruksi selesai, WAJIB:
    ainstruct <nama-folder>
    ```
 
-   Contoh: `ainstruct laravel` (atau `./bin/setup-ai-rules.sh laravel` dari salinan repo ini).
+   Contoh: `ainstruct laravel` (atau `./bin/ainstruct laravel` dari checkout repo ini).
    Ini mendistribusikan `ai-instructions.md` ke `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
    `.github/copilot-instructions.md`, `.cursorrules`, `.cursor/rules/...`, `.windsurfrules`,
    `.clinerules/...`, `.continuerules`, `.aider.conf.yml`, `opencode.json` (opencode —
    default AI untuk pekerjaan, `default_agent: "build"` + instruksi dari `AGENTS.md`)
    — semua di **proyek konsumen**.
 
-   Adaptor eksekusi yang setara tersedia: `bin/install.sh` (curl | sh, mengunduh tarball ke
-   cache lalu menjalankan `bin/setup-ai-rules.sh` terhadap pwd), `bin/ainstruct` (bin paket
-   `lace/ainstruct` untuk Composer dan `@lace/ainstruct` untuk npm/npx). Ketiganya
-   mendukung subcommand `distribute`, `reset`, `wipe`, dan `template`. Rincian di
-   README `Adaptor: curl | sh, Composer, npm/npx`.
+   Adaptor eksekusi: `bin/ainstruct` (bin paket `lace/ainstruct` untuk Composer) —
+   satu-satunya kanal distribusi. CLI mendukung subcommand `distribute`, `reset`,
+   `wipe`, `init`, dan `template`. Rincian di README `Adaptor: Composer`.
 
    Template milik **konsumen** dikelola via `template` (list/create/clone/update/
    delete/path) dan hidup di `${AINSTRUCT_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ainstruct}/templates`,
@@ -623,10 +621,10 @@ Setelah set instruksi selesai, WAJIB:
    `template clone`. Rincian di README `Template Manager: Template Milik Konsumen`.
 
    > [!CRITICAL]
-   > **DILARANG KERAS menjalankan `./bin/setup-ai-rules.sh` di root repository AI-Instructions
-   > ini.** Script dengan target root repo authoring menimpa instruksi khusus AI repositori ini
+   > **DILARANG KERAS menjalankan `./bin/ainstruct` di root repository AI-Instructions
+   > ini.** CLI dengan target root repo authoring menimpa instruksi khusus AI repositori ini
    > (AGENTS.md, dan memunculkan artefak distribusi di root) dengan isi hasil generate
-   > = **KESALAHAN KRITIS, KEGAGALAN TOTAL**. Script ini hanya untuk root **proyek
+   > = **KESALAHAN KRITIS, KEGAGALAN TOTAL**. CLI ini hanya untuk root **proyek
    > konsumen** tempat toolboxes AI memang dituju.
 
 3. **Laporkan hasil** ke user: folder yang dibuat, struktur file, dan langkah distribusi.
@@ -684,11 +682,11 @@ Setelah set instruksi selesai, WAJIB:
 - **PREFER** pola berulang & bukti struktural untuk identifikasi pola.
 - **PREFER** implementasi tetangga sebagai contoh utama.
 - **JANGAN** memparafrase snippet kanonik — salin verbatim dan sertakan evidence anchor.
-- **DILARANG KERAS menjalankan `./bin/setup-ai-rules.sh` di root repository AI-Instructions ini**
+- **DILARANG KERAS menjalankan `./bin/ainstruct` di root repository AI-Instructions ini**
   (bengkel authoring). Menjalankannya di sini menimpa self-instruction repo (AGENTS.md) dan
   memunculkan `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, `.continuerules`,
   `.clinerules/`, `.cursor/rules/`, `.github/`, `.aider.conf.yml`, `ai-instructions/` di root
-  dengan isi hasil generate = **KEGAGALAN TOTAL**. Script hanya dijalankan di root proyek
+  dengan isi hasil generate = **KEGAGALAN TOTAL**. CLI hanya dijalankan di root proyek
   konsumen.
 - **DILARANG KERAS men-commit artefak distribusi** (`AGENTS.md` berisi isi hasil-generate,
   `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, `.continuerules`,
@@ -724,6 +722,6 @@ Saat user berkata sekitar seperti: *"buat set instruksi untuk repo <X> ini"* ata
 > = KEGAGALAN TOTAL (Klausa 1). Set instruksi yang tidak memuat Klausa 2–5 (dilarang kerja
 > di main, commit message ringkas, inisiasi git, protokol MASTER_BUILD_SPECIFICATION)
 > = KEGAGALAN TOTAL. Set yang tidak memenuhi REFERENCE BAR bagian 6D (termasuk bank snippet
-> terpusat) = BELUM SELESAI. Menjalankan `./bin/setup-ai-rules.sh` di root repo authoring ini
+> terpusat) = BELUM SELESAI. Menjalankan `./bin/ainstruct` di root repo authoring ini
 > atau men-commit artefak distribusinya ke repo ini = KEGAGALAN TOTAL. Kepatuhan penuh pada
 > playbook ini adalah SYARAT ABSOLUT.
