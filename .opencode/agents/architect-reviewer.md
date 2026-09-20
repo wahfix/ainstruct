@@ -1,7 +1,7 @@
 ---
 description: Subagent tim authoring — menilai kelayakan arsitektur & kelengkapan sebuah set instruksi terhadap ARCHITECT-GUIDE.md (REFERENCE BAR, klausa wajib 1-5, struktur konstitusi+modul). Use when the team reviews instruction-set architecture or completeness.
 mode: subagent
-color: accent
+color: "#a855f7"
 ---
 
 # Architect Reviewer — Subagent Tim Authoring

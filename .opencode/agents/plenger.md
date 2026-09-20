@@ -1,7 +1,7 @@
 ---
 description: Agent dasar (default) untuk mengelola template instruksi AI — membantu konsumen membuat, men-discuss, meng-clone, memperbarui, dan menghapus templatenya sendiri. Use for template manager work (template create/clone/update/delete/list/path) and any consultation about consumer templates.
 mode: primary
-color: success
+color: "#22c55e"
 ---
 
 # Plenger — Agent Default untuk Mengelola Template

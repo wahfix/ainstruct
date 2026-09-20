@@ -81,7 +81,7 @@ AI-Instructions/
    > **Bukan template**: tim development multi-agent (`team-dev`) dan filter anti-AI-slop
    > (`antislop`) adalah **komponen sistem repo ini**, bukan template terdistribusi. Tim
    > development hidup sebagai protokol internal authoring (skill `team-authoring` +
-   > subagent di `.opencode/agent/`); filter anti-AI-slop hidup sebagai skill self-hosting
+   > subagent di `.opencode/agents/`); filter anti-AI-slop hidup sebagai skill self-hosting
    > (`.opencode/skills/antislop*`) yang digunakan agent penulis dan ditegakkan gate
    > `scripts/antislop-check.sh` (bagian dari health-check). Konsumen yang membutuhkan
    > filter anti-slop di proyeknya menyalin sistem vendor `.opencode/skills/antislop*`
@@ -314,7 +314,7 @@ Setiap set WAJIB memuat KLAUSA 1–5 (detail penuh di `ARCHITECT-GUIDE.md` bagia
 | `templates/java/`, `templates/react/` | Direncanakan | Didukung script (coming soon), folder belum dibuat |
 
 > **Bukan template** — komponen sistem repo ini: tim development multi-agent (protokol internal
-> authoring via skill `team-authoring` + subagent `.opencode/agent/`) dan filter anti-AI-slop
+> authoring via skill `team-authoring` + subagent `.opencode/agents/`) dan filter anti-AI-slop
 > (`scripts/antislop-check.sh` + skill `.opencode/skills/antislop*`, self-hosting, upstream MIT
 > `miqdadbadjuber/anti-slop`). Keduanya dipakai mesin authoring (L2), tidak didistribusikan ke
 > proyek konsumen sebagai template.
