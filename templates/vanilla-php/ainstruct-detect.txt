@@ -1,0 +1,20 @@
+# ainstruct-detect.txt — sinyal pendeteksi stack untuk template vanilla-php/.
+# Dibaca oleh `ainstruct init`. Format tiap baris: <bobot>|<tipe>|<argumen>|<label>
+#   tipe 'file': argumen = path relatif; cocok bila file ada.
+#   tipe 'dir' : argumen = path relatif; cocok bila direktori ada.
+#   tipe 'grep': argumen = <path>:<pola regex>; cocok bila file ada & memuat pola.
+# Skor = jumlah bobot sinyal yang cocok; keyakinan: >=6 CONFIRMED, >=4 STRONG,
+# >=2 WEAK, sisanya UNKNOWN. Set ini terdeteksi dari stack PHP + Composer + PSR-4
+# TANPA framework penuh: hanya illuminate/container (opsional illuminate/support)
+# atau tidak ada dependensi framework sama sekali. Sinyal negatif tidak didukung
+# engine — ketiadaan artefak khas framework penuh justru membuat sinyal template
+# framework lain tidak cocok.
+5|file|composer.json|Manifest Composer PHP
+4|grep|composer.json:illuminate/container|Dependency composer 'illuminate/container' (container DI saja)
+4|grep|composer.json:illuminate/support|Dependency composer 'illuminate/support' (Str, Collection)
+3|dir|src|Direktori src/ (PSR-4 aplikasi)
+3|file|public/index.php|Front controller public/index.php
+2|grep|composer.json:"phpunit/phpunit"|Dependency composer PHPUnit
+2|file|phpstan.neon|Konfigurasi PHPStan
+2|file|phpunit.xml|Konfigurasi PHPUnit
+2|file|.editorconfig|Konfigurasi EditorConfig
