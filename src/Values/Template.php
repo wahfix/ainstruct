@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Values;
 
 use Lace\Ainstruct\Enums\TemplateOrigin;

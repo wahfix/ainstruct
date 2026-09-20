@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Console;
 
 use Lace\Ainstruct\Abstractions\Commands\Command;

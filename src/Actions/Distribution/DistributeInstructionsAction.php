@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Lace\Ainstruct\Actions\Distribution;
 
 use Lace\Ainstruct\Abstractions\Actions\Action;
