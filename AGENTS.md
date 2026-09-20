@@ -69,8 +69,12 @@ distribusi di root repo ini, hapus, jangan di-commit.
   tawarkan "commit + push?" dan tunggu persetujuan.
 - Enforcement (diterapkan di repo ini): GitHub branch protection pada `main` aktif — require a
   PR before merging (0 approval untuk operator tunggal; operator meninjau lalu me-merge PR-nya
-  sendiri), do not allow bypassing (enforce admins), no force pushes, no deletions. Status
-  checks dikosongkan sampai ada CI; begitu workflow `tests`/`lint` ada, wajib dipasang.
+  sendiri), do not allow bypassing (enforce admins), no force pushes, no deletions. Required
+  status checks TERPASANG dan memetakan seluruh job CI: Markdown lint, Shellcheck, PHP lint,
+  Instruction integrity, Distribution smoke test, Shell syntax, Template integrity, Bootstrap
+  local-only, Backup/restore cycle, Metrics local-only. Ketika job CI baru ditambahkan ke
+  workflow, context-nya WAJIB ikut ditambahkan ke branch protection (tanpa itu PR bisa lolos
+  tanpa check tersebut).
 
 ## 5. ATURAN KUALITAS AUTHORING (DIADOPSI DARI SET `templates/laravel/`)
 
@@ -86,7 +90,7 @@ pekerjaan dokumentasi instruksi; rincian penuh ada di modul yang dirujuk):
    — usage rule 6 (evidence-anchored programming).
 2. **Quality gates sebelum "selesai"** — sebuah tugas authoring dianggap selesai hanya bila
    semua check yang dijalankan CI lulus secara lokal (local parity): `bash scripts/health-check.sh`,
-   `npx --yes markdownlint-cli2 --config .markdownlint-cli2.yaml '**/*.md'`, dan `bash -n` untuk
+   `npx --yes markdownlint-cli2@0.23.2 --config .markdownlint-cli2.yaml '**/*.md'`, dan `bash -n` untuk
    script shell; untuk perubahan yang menyentuh engine CLI (`bin/ainstruct`, `src/`, `tests/`)
    tambah `php -l`, `vendor/bin/pint --test`, `vendor/bin/phpstan analyse`, dan
    `vendor/bin/phpunit`. Senior self-review: baca diff sebagai reviewer, bukan sebagai penulis;
@@ -131,11 +135,14 @@ pekerjaan dokumentasi instruksi; rincian penuh ada di modul yang dirujuk):
 
 ### Enforcement (di repo ini)
 
-- Pre-commit hook `.githooks/pre-commit` menjalankan `scripts/health-check.sh --quiet` (lint
-  markdown di-skip anggun bila `markdownlint-cli2` tidak terpasang); aktif via
-  `bash scripts/install-hooks.sh`.
-- CI `lint` (markdownlint + shellcheck + PHP lint), `tests` (Instruction integrity +
-  Distribution smoke test), dan `meta` (operator-memory toolkit: shell syntax, template
-  integrity, bootstrap, backup/restore) adalah status checks wajib pada branch protection `main`.
+- Pre-commit hook `.githooks/pre-commit` menjalankan (1) `scripts/health-check.sh --quiet`,
+  (2) markdown lint pada `.md` staging dengan versi markdownlint yang sama dengan CI
+  (`npx --yes markdownlint-cli2@0.23.2`) — dilewati anggun hanya bila `npx` tidak tersedia,
+  dan (3) `bash -n` pada `.sh` staging. Aktif via `bash scripts/install-hooks.sh`.
+- CI `lint` (Markdown lint + Shellcheck + PHP lint), `tests` (Instruction integrity +
+  Distribution smoke test), dan `meta` (Shell syntax, Template integrity, Bootstrap
+  local-only, Backup/restore cycle, Metrics local-only) adalah status checks wajib pada
+  branch protection `main` — daftar ini harus selalu sinkron dengan job di workflow
+  (lihat Enforcement bagian 4).
 - Health-check umumnya bertambah jumlahnya tiap adopsi; aturan ini tidak mengharuskan angka
   tetap, tapi mengharuskan 0 kegagalan.
