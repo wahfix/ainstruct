@@ -13,17 +13,32 @@ if ! scripts/health-check.sh --quiet; then
   exit 1
 fi
 
-# 2) Markdown lint on staged .md files when markdownlint-cli2 is available.
-if command -v markdownlint-cli2 >/dev/null 2>&1; then
+# 2) Markdown lint on staged .md files, pinned to the CI version
+#    (npx --yes markdownlint-cli2@0.23.2 — same as .github/workflows/lint.yml) so
+#    local results match CI (reproduce-everywhere). Skipped gracefully ONLY when
+#    npx is unavailable; a non-zero lint result still blocks the commit.
+if command -v npx >/dev/null 2>&1; then
   mapfile -t changed < <(git diff --cached --name-only --diff-filter=ACMR -- '*.md')
   if [[ ${#changed[@]} -gt 0 ]]; then
-    if ! markdownlint-cli2 "${changed[@]}"; then
+    if ! npx --yes markdownlint-cli2@0.23.2 "${changed[@]}"; then
       printf 'pre-commit: markdown lint GAGAL — perbaiki lalu commit ulang.\n' >&2
       exit 1
     fi
   fi
 else
-  printf 'pre-commit: [skip] markdownlint-cli2 tidak terpasang — lint markdown dilewati.\n' >&2
+  printf 'pre-commit: [skip] npx tidak tersedia — lint markdown dilewati.\n' >&2
+fi
+
+# 3) bash -n syntax check on staged shell scripts (cheap, catches typos before
+#    commit; CI also runs bash -n on scripts/ and operator-memory/).
+mapfile -t changed_sh < <(git diff --cached --name-only --diff-filter=ACMR -- '*.sh')
+if [[ ${#changed_sh[@]} -gt 0 ]]; then
+  for f in "${changed_sh[@]}"; do
+    if ! bash -n "$f"; then
+      printf 'pre-commit: bash -n GAGAL pada %s — perbaiki lalu commit ulang.\n' "$f" >&2
+      exit 1
+    fi
+  done
 fi
 
 exit 0
