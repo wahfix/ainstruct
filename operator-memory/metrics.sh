@@ -137,7 +137,7 @@ if [[ -n "$REPO_DIR" && -d "$REPO_DIR/.git" ]]; then
 fi
 
 # --- Indikator keseimbangan (objektif, berbasis aturan) ---
-status_persona="ok"; status_context="ok"; status_balance="ok"; status_log="ok"
+status_persona="ok"; status_context="ok"; status_balance="ok"
 WARNS=()
 
 if [[ "$PERSONA_LINES" -eq 0 ]]; then
@@ -149,7 +149,7 @@ fi
 if [[ "$CONTEXT_LINES" -eq 0 ]]; then
   status_context="missing"; WARNS+=("context.md belum ada — konteks pekerjaan belum direkam")
 elif [[ "$LOG_ENTRIES" -eq 0 ]]; then
-  status_log="empty"; WARNS+=("context belum punya entri Log — checkpoint kerja belum dicatat")
+  WARNS+=("context belum punya entri Log — checkpoint kerja belum dicatat")
 fi
 
 if [[ "$TOTAL_LINES" -gt 0 ]]; then
