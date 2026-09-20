@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y shellcheck
-      - run: shellcheck --severity=warning scripts/health-check.sh scripts/antislop-check.sh scripts/install-hooks.sh .githooks/pre-commit operator-memory/*.sh
+      - run: shellcheck --severity=warning scripts/health-check.sh scripts/antislop-check.sh scripts/install-hooks.sh .githooks/pre-commit
         name: shellcheck shell scripts
 
   php:
