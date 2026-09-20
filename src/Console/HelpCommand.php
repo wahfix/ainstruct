@@ -34,10 +34,13 @@ final class HelpCommand extends Command
         $this->header('AI Instructions Distribution CLI');
         $this->style()->section('Usage');
         $this->style()->bullet($this->style()->cyan('ainstruct <command> [options]'));
-        $this->style()->bullet($this->style()->cyan('ainstruct help <command>').'   # detail fungsi command/subcommand');
+        $this->style()->bullet($this->style()->cyan('ainstruct help <command>').'  # detail fungsi command/subcommand');
         $this->style()->blank();
         $this->style()->section('Available commands');
-        $this->tableTwoColumns('Command', 'Deskripsi', $this->commands());
+
+        foreach ($this->commands() as $command) {
+            $this->pairLine($command['name'], $command['description']);
+        }
 
         $this->style()->blank();
         $this->style()->bullet($this->style()->dim('Kontrak lama: ainstruct <framework> = distribute (mis. ainstruct laravel).'));
@@ -57,15 +60,10 @@ final class HelpCommand extends Command
         $this->style()->blank();
         $this->style()->section('Usage');
         $this->style()->bullet($this->style()->cyan('ainstruct distribute <framework>'));
-        $this->style()->bullet($this->style()->cyan('ainstruct <framework>').'   # bentuk pendek');
+        $this->style()->bullet($this->style()->cyan('ainstruct <framework>').'  # bentuk pendek');
         $this->style()->blank();
         $this->style()->section('Argumen');
-        $this->style()->table(
-            ['Argumen', 'Penjelasan'],
-            [
-                ['<framework>', 'Nama template; custom konsumen menang atas built-in bila nama sama.'],
-            ]
-        );
+        $this->pairLine('<framework>', 'Nama template; custom konsumen menang atas built-in bila nama sama.');
         $this->style()->blank();
         $this->style()->section('Contoh');
         $this->style()->bullet($this->style()->cyan('ainstruct laravel'));
@@ -86,14 +84,9 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct init [--template <nama>] [--dry-run]'));
         $this->style()->blank();
         $this->style()->section('Opsi');
-        $this->style()->table(
-            ['Opsi', 'Penjelasan'],
-            [
-                ['--template <nama>', 'Paksa template, lewati deteksi.'],
-                ['--dry-run', 'Laporkan hasil deteksi tanpa mengubah apa pun.'],
-                ['--force', 'Diterima untuk keseragaman CLI; init tidak meminta konfirmasi.'],
-            ]
-        );
+        $this->pairLine('--template <nama>', 'Paksa template, lewati deteksi.');
+        $this->pairLine('--dry-run', 'Laporkan hasil deteksi tanpa mengubah apa pun.');
+        $this->pairLine('--force', 'Diterima untuk keseragaman CLI; init tidak meminta konfirmasi.');
         $this->style()->blank();
         $this->style()->section('Contoh');
         $this->style()->bullet($this->style()->cyan('ainstruct init --dry-run'));
@@ -115,21 +108,11 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct status [--json]'));
         $this->style()->blank();
         $this->style()->section('Opsi');
-        $this->style()->table(
-            ['Opsi', 'Penjelasan'],
-            [
-                ['--json', 'Laporan JSON murni (tanpa header/ANSI) untuk automation/CI.'],
-            ]
-        );
+        $this->pairLine('--json', 'Laporan JSON murni (tanpa header/ANSI) untuk automation/CI.');
         $this->style()->blank();
         $this->style()->section('Exit code');
-        $this->style()->table(
-            ['Kode', 'Arti'],
-            [
-                ['0', 'Sehat: artefak lengkap & sinkron dengan master.'],
-                ['1', 'Ada masalah (artefak hilang / berbeda dari master).'],
-            ]
-        );
+        $this->style()->bullet($this->style()->cyan('0').'  Sehat: artefak lengkap & sinkron dengan master.');
+        $this->style()->bullet($this->style()->cyan('1').'  Ada masalah (artefak hilang / berbeda dari master).');
         $this->style()->blank();
 
         return 0;
@@ -163,12 +146,7 @@ final class HelpCommand extends Command
         $this->style()->bullet($this->style()->cyan('ainstruct wipe [--force]'));
         $this->style()->blank();
         $this->style()->section('Opsi');
-        $this->style()->table(
-            ['Opsi', 'Penjelasan'],
-            [
-                ['--force', 'Hapus tanpa konfirmasi (CI/automation).'],
-            ]
-        );
+        $this->pairLine('--force', 'Hapus tanpa konfirmasi (CI/automation).');
         $this->style()->bullet('Di terminal interaktif: minta konfirmasi dulu; non-interaktif tanpa --force gagal (exit 1).');
         $this->style()->blank();
 
@@ -183,7 +161,10 @@ final class HelpCommand extends Command
         $this->style()->bullet('Built-in tidak bisa dihapus/diperbarui langsung; customisasi wajib lewat clone.');
         $this->style()->blank();
         $this->style()->section('Subcommands');
-        $this->tableTwoColumns('Subcommand', 'Deskripsi', $this->templateSubcommands());
+
+        foreach ($this->templateSubcommands() as $command) {
+            $this->pairLine($command['name'], $command['description']);
+        }
 
         $this->style()->blank();
         $this->style()->section('Contoh');
@@ -197,10 +178,18 @@ final class HelpCommand extends Command
     private function unknown(string $topic): int
     {
         $this->style()->error("Perintah tidak dikenal: {$topic}");
-        $this->style()->bullet($this->style()->cyan('ainstruct help').'   untuk daftar command.');
+        $this->style()->bullet($this->style()->cyan('ainstruct help').'  untuk daftar command.');
         $this->style()->blank();
 
         return 1;
+    }
+
+    /**
+     * Dua kolom rapi tanpa garis: label cyan di kiri, deskripsi di kanan.
+     */
+    private function pairLine(string $name, string $description): void
+    {
+        $this->style()->bullet($this->style()->cyan(str_pad($name, 42)).' '.$description);
     }
 
     /**
@@ -232,16 +221,5 @@ final class HelpCommand extends Command
             ['name' => 'delete <nama> [--force]', 'description' => 'Hapus template custom (built-in terproteksi).'],
             ['name' => 'path <nama>', 'description' => 'Tampilkan path template (custom dulu, baru built-in).'],
         ];
-    }
-
-    /**
-     * @param  list<array{name: string, description: string}>  $rows
-     */
-    private function tableTwoColumns(string $leftHeader, string $rightHeader, array $rows): void
-    {
-        $this->style()->table(
-            [$leftHeader, $rightHeader],
-            array_map(fn (array $row): array => [$row['name'], $row['description']], $rows)
-        );
     }
 }
