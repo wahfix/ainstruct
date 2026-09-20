@@ -183,6 +183,10 @@ jobs:
             || { echo "FAIL: AGENTS.md bukan dari template custom"; exit 1; }
 
           # --- status: laporan kesehatan state instruksi ---
+          # AINSTRUCT_HOME di-isolasi ulang — template shadow dari section
+          # template-manager/init (blank, laravel scaffold) tidak boleh
+          # mencemari deteksi template aktif di section status.
+          export AINSTRUCT_HOME="$TMP/ahome-status"
           SDIR="$TMP/status"
           mkdir -p "$SDIR"
           ( cd "$SDIR" && "$TMP/bin/setup-ai-rules.sh" laravel >/dev/null )
