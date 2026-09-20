@@ -5,6 +5,7 @@ namespace Lace\Ainstruct;
 use Illuminate\Container\Container;
 use Lace\Ainstruct\Abstractions\Commands\Command;
 use Lace\Ainstruct\Console\DistributeCommand;
+use Lace\Ainstruct\Console\HelpCommand;
 use Lace\Ainstruct\Console\InitCommand;
 use Lace\Ainstruct\Console\Input;
 use Lace\Ainstruct\Console\ResetCommand;
@@ -27,12 +28,15 @@ final class Application
         'reset' => ResetCommand::class,
         'template' => TemplateCommand::class,
         'init' => InitCommand::class,
+        'help' => HelpCommand::class,
     ];
 
     public function __construct(private Container $container) {}
 
     /**
      * Jalankan CLI dengan argumen user (tanpa nama script).
+     *
+     * Tanpa argumen (atau `help`, `-h`, `--help`) → daftar command.
      *
      * @param  list<string>  $args
      */
@@ -41,7 +45,11 @@ final class Application
         $commandName = 'distribute';
         $commandArgs = $args;
 
-        $first = strtolower((string) ($args[0] ?? ''));
+        $first = strtolower((string) ($args[0] ?? 'help'));
+
+        if (in_array($first, ['help', '-h', '--help'], true)) {
+            $first = 'help';
+        }
 
         if (isset(self::COMMANDS[$first])) {
             $commandName = $first;
