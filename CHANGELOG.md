@@ -6,7 +6,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/), dan v
 mengikuti [Semantic Versioning](https://semver.org/). Versi diambil dari git tag
 (`composer.json` sengaja tidak memuat field `version` — versi ditentukan oleh tag).
 
-## [Unreleased]
+## [0.3.0] - 2026-09-21
 
 ### Added
 
@@ -37,6 +37,14 @@ mengikuti [Semantic Versioning](https://semver.org/). Versi diambil dari git tag
 - Workflow Tests kini menjalankan phpunit dan smoke test WebUI (`php -S` + API +
   tipe MIME aset statis) sehingga regresi router ikut terdeteksi di CI.
 
+### Catatan
+
+- Rilis ini mencakup PR #57 (WebUI + impor git) dan PR #58 (perbaikan tilde,
+  clone, penguatan CI). Branch protection `main` kini mewajibkan 12 status
+  checks (termasuk PHPUnit dan WebUI smoke test).
+- Terverifikasi: health-check 128 pass, pint/phpstan/phpunit lokal hijau,
+  CI Lint / Meta / Tests sukses di `main`.
+
 ## [0.2.5] - 2026-09-20
 
 Rilis pertama yang di-tag (tag git `v0.2.5`).
@@ -55,3 +63,4 @@ Rilis pertama yang di-tag (tag git `v0.2.5`).
 - Terverifikasi: health-check 127 pass, CI Lint / Meta / Tests sukses di `main`.
 
 [0.2.5]: https://github.com/wahfix/ainstruct/releases/tag/v0.2.5
+[0.3.0]: https://github.com/wahfix/ainstruct/releases/tag/v0.3.0
