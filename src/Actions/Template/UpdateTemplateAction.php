@@ -9,6 +9,7 @@ use Lace\Ainstruct\Contracts\Repository\TemplateRepositoryContract;
 use Lace\Ainstruct\Enums\TemplateOrigin;
 use Lace\Ainstruct\Exceptions\InvalidOperationException;
 use Lace\Ainstruct\Exceptions\TemplateProtectedException;
+use Lace\Ainstruct\Services\Template\SourceImporter;
 use Lace\Ainstruct\Values\Template;
 
 final class UpdateTemplateAction extends Action implements RuledActionContract
@@ -16,6 +17,7 @@ final class UpdateTemplateAction extends Action implements RuledActionContract
     public function __construct(
         private TemplateRepositoryContract $templates,
         private InstructionFileRepositoryContract $files,
+        private SourceImporter $importer,
     ) {}
 
     public function rules(): array
@@ -23,6 +25,7 @@ final class UpdateTemplateAction extends Action implements RuledActionContract
         return [
             'name' => ['required', 'string', 'pattern:/^[A-Za-z0-9_-]+$/'],
             'from' => ['nullable', 'string'],
+            'ref' => ['nullable', 'string'],
             'force' => ['nullable', 'boolean'],
         ];
     }
@@ -31,6 +34,7 @@ final class UpdateTemplateAction extends Action implements RuledActionContract
     {
         $name = $payload['name'];
         $from = $payload['from'] ?? null;
+        $ref = $payload['ref'] ?? null;
         $force = (bool) ($payload['force'] ?? false);
 
         $target = $this->templates->consumerPathFor($name);
@@ -45,7 +49,26 @@ final class UpdateTemplateAction extends Action implements RuledActionContract
             throw new InvalidOperationException("Template custom tidak ditemukan: {$name}");
         }
 
+        // Sumber git eksplisit (URL/jalur repo) → impor ulang dari sana.
+        if ($from !== null && $from !== '' && $this->importer->isGitSource($from)) {
+            $this->importer->import($from, $target, $ref);
+            $this->importer->writeSource($target, $from, $ref);
+
+            return new Template($name, $target, TemplateOrigin::CUSTOM);
+        }
+
+        // Tanpa --from: template yang pernah diimpor dari git ditarik ulang
+        // dari sumber tersimpan (ainstruct.source); selain itu built-in senama.
         if ($from === null || $from === '') {
+            $stored = $this->importer->readSource($target);
+
+            if ($stored !== null) {
+                $this->importer->import($stored['source'], $target, $ref ?? $stored['ref']);
+                $this->importer->writeSource($target, $stored['source'], $ref ?? $stored['ref']);
+
+                return new Template($name, $target, TemplateOrigin::CUSTOM);
+            }
+
             $sourceTemplate = $this->templates->findBuiltin($name);
 
             if ($sourceTemplate === null) {

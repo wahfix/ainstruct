@@ -8,7 +8,13 @@ mengikuti [Semantic Versioning](https://semver.org/). Versi diambil dari git tag
 
 ## [Unreleased]
 
-- Belum ada perubahan yang menunggu rilis.
+### Added
+
+- `template create --from <sumber>` dan `template update --from <sumber>` untuk
+  mengimpor template dari sumber git (URL `https`/`ssh` atau jalur repo lokal).
+  Sumber dicatat ke `ainstruct.source` di dalam template; `template update` tanpa
+  `--from` menarik ulang dari sumber tersimpan. Opsi `--ref <branch|tag>` untuk
+  mem-pin ref tertentu. Impor memakai `git clone` dan hasilnya salinan tanpa `.git/`.
 
 ## [0.2.5] - 2026-09-20
 

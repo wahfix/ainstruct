@@ -221,4 +221,208 @@ final class TemplateCommandTest extends TestCase
         $this->assertStringContainsString('Subcommand template tidak dikenal', $output);
         $this->assertStringContainsString('template create <nama>', $output);
     }
+
+    public function test_template_create_from_git_source_imports(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->makeGitTemplateSource($this->tempDir().'/remote');
+
+        $app = $this->makeApplication();
+
+        [$exit, $output] = $this->runCapture($app, ['template', 'create', 'xyz', '--from', $source]);
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString("Template 'xyz' berhasil diimpor", $output);
+        $this->assertFileExists($home.'/templates/xyz/ai-instructions.md');
+        $this->assertFileExists($home.'/templates/xyz/ai-instructions/01-governance.md');
+
+        $sourceFile = $home.'/templates/xyz/ainstruct.source';
+        $this->assertFileExists($sourceFile);
+        $this->assertStringContainsString('source='.$source, (string) file_get_contents($sourceFile));
+        $this->assertDirectoryDoesNotExist($home.'/templates/xyz/.git');
+    }
+
+    public function test_template_create_from_git_source_with_ref_pins_commit(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->makeGitTemplateSource($this->tempDir().'/remote', "# AI v1\n");
+
+        // Commit kedua (v2) — tag v1 menunjuk commit pertama.
+        file_put_contents($source.'/ai-instructions.md', "# AI v2\n");
+        $this->git($source, ['add', '-A']);
+        $this->git($source, ['commit', '-qm', 'v2']);
+        $this->git($source, ['tag', 'v1', 'HEAD~1']);
+
+        $app = $this->makeApplication();
+
+        [$exit, $output] = $this->runCapture($app, ['template', 'create', 'ver', '--from', $source, '--ref', 'v1']);
+
+        $this->assertSame(0, $exit);
+        $content = (string) file_get_contents($home.'/templates/ver/ai-instructions.md');
+        $this->assertStringContainsString('AI v1', $content);
+        $this->assertStringNotContainsString('AI v2', $content);
+        $this->assertStringContainsString('ref=v1', (string) file_get_contents($home.'/templates/ver/ainstruct.source'));
+    }
+
+    public function test_template_create_from_git_source_missing_constitution_fails(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->tempDir().'/notemplate';
+        mkdir($source, 0777, true);
+        file_put_contents($source.'/README.txt', "bukan template\n");
+        $this->git($source, ['init', '-q']);
+        $this->git($source, ['config', 'user.name', 'Test']);
+        $this->git($source, ['config', 'user.email', 'test@example.com']);
+        $this->git($source, ['add', '-A']);
+        $this->git($source, ['commit', '-qm', 'init']);
+
+        $app = $this->makeApplication();
+
+        [$exit, $output] = $this->runCapture($app, ['template', 'create', 'xyz', '--from', $source]);
+
+        $this->assertSame(1, $exit);
+        $this->assertStringContainsString('ai-instructions.md', $output);
+        $this->assertDirectoryDoesNotExist($home.'/templates/xyz');
+    }
+
+    public function test_template_create_from_non_git_source_is_rejected(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+
+        $app = $this->makeApplication();
+
+        // create --from hanya menerima sumber git; nama template lain ditolak
+        // dengan arah ke `template clone`.
+        [$exit, $output] = $this->runCapture($app, ['template', 'create', 'xyz', '--from', 'laravel']);
+
+        $this->assertSame(1, $exit);
+        $this->assertStringContainsString('hanya menerima sumber git', $output);
+        $this->assertStringContainsString('template clone', $output);
+        $this->assertDirectoryDoesNotExist($home.'/templates/xyz');
+    }
+
+    public function test_template_create_conflicts_with_existing_custom_without_force(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->makeGitTemplateSource($this->tempDir().'/remote');
+
+        $app = $this->makeApplication();
+
+        [$importExit, $importOutput] = $this->runCapture($app, ['template', 'create', 'namaku', '--from', $source]);
+        $this->assertSame(0, $importExit);
+        $this->assertStringContainsString('berhasil diimpor', $importOutput);
+
+        // Directory custom sudah ada → create tanpa --force ditolak (force hanya
+        // men-shadow nama built-in, bukan menimpa dir custom yang ada).
+        [$exit, $output] = $this->runCapture($app, ['template', 'create', 'namaku']);
+
+        $this->assertSame(1, $exit);
+        $this->assertStringContainsString('Template custom sudah ada', $output);
+    }
+
+    public function test_template_create_from_git_source_force_overwrites_existing_custom(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->makeGitTemplateSource($this->tempDir().'/remote', "# AI v1\n");
+
+        $app = $this->makeApplication();
+
+        [$scaffoldExit, $scaffoldOutput] = $this->runCapture($app, ['template', 'create', 'xyz']);
+        $this->assertSame(0, $scaffoldExit);
+        $this->assertStringContainsString('berhasil dibuat', $scaffoldOutput);
+
+        // Impor dengan --force mengambil alih directory custom yang sudah ada.
+        [$exit, $output] = $this->runCapture($app, ['template', 'create', 'xyz', '--from', $source, '--force']);
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString("Template 'xyz' berhasil diimpor", $output);
+        $this->assertStringContainsString('AI v1', (string) file_get_contents($home.'/templates/xyz/ai-instructions.md'));
+        $this->assertFileExists($home.'/templates/xyz/ainstruct.source');
+    }
+
+    public function test_template_update_from_git_source_reimports(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->makeGitTemplateSource($this->tempDir().'/remote');
+
+        $app = $this->makeApplication();
+
+        [$importExit, $importOutput] = $this->runCapture($app, ['template', 'create', 'xyz', '--from', $source]);
+        $this->assertSame(0, $importExit);
+
+        // Edit lokal — update --from harus mengembalikan ke isi sumber.
+        $dir = $home.'/templates/xyz';
+        file_put_contents($dir.'/ai-instructions.md', (string) file_get_contents($dir.'/ai-instructions.md')."\n# LOCAL-EDIT\n");
+
+        [$exit, $output] = $this->runCapture($app, ['template', 'update', 'xyz', '--from', $source, '--force']);
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString("Template 'xyz' diperbarui", $output);
+        $content = (string) file_get_contents($dir.'/ai-instructions.md');
+        $this->assertStringNotContainsString('LOCAL-EDIT', $content);
+        $this->assertStringContainsString('CONSTITUTION (git)', $content);
+    }
+
+    public function test_template_update_without_from_repulls_stored_source(): void
+    {
+        $home = $this->tempDir();
+        $this->withHome($home);
+        $source = $this->makeGitTemplateSource($this->tempDir().'/remote');
+
+        $app = $this->makeApplication();
+
+        [$importExit, $importOutput] = $this->runCapture($app, ['template', 'create', 'xyz', '--from', $source]);
+        $this->assertSame(0, $importExit);
+
+        // Sumber diperbarui (commit baru) — update tanpa --from menarik sumber tersimpan.
+        file_put_contents($source.'/ai-instructions.md', "# AI v2\n");
+        $this->git($source, ['add', '-A']);
+        $this->git($source, ['commit', '-qm', 'v2']);
+
+        [$exit, $output] = $this->runCapture($app, ['template', 'update', 'xyz', '--force']);
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString("Template 'xyz' diperbarui", $output);
+        $this->assertStringContainsString('AI v2', (string) file_get_contents($home.'/templates/xyz/ai-instructions.md'));
+    }
+
+    /**
+     * Buat repo git lokal berisi template minimal (ai-instructions.md + modul).
+     * Hermetik: git clone menerima jalur lokal, tidak butuh jaringan.
+     */
+    private function makeGitTemplateSource(string $dir, string $constitution = "# AI INSTRUCTION SYSTEM — CONSTITUTION (git)\n"): string
+    {
+        mkdir($dir, 0777, true);
+        mkdir($dir.'/ai-instructions', 0777, true);
+        file_put_contents($dir.'/ai-instructions.md', $constitution);
+        file_put_contents($dir.'/ai-instructions/01-governance.md', "# Modul governance\n");
+
+        $this->git($dir, ['init', '-q']);
+        $this->git($dir, ['config', 'user.name', 'Test']);
+        $this->git($dir, ['config', 'user.email', 'test@example.com']);
+        $this->git($dir, ['add', '-A']);
+        $this->git($dir, ['commit', '-qm', 'init']);
+
+        return $dir;
+    }
+
+    /**
+     * @param  list<string>  $args
+     */
+    private function git(string $dir, array $args): void
+    {
+        $command = 'git -C '.escapeshellarg($dir).' '.implode(' ', array_map('escapeshellarg', $args)).' 2>&1';
+        $output = [];
+        $code = 0;
+        exec($command, $output, $code);
+
+        $this->assertSame(0, $code, 'git gagal: '.$command."\n".implode("\n", $output));
+    }
 }

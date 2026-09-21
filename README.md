@@ -228,17 +228,25 @@ bila namanya sama (shadow — bisa dibatalkan dengan menghapus template custom).
 ```bash
 ainstruct template list                          # daftar built-in (proteksi) + custom
 ainstruct template create myfw                   # buat template/scaffold sendiri
+ainstruct template create myfw --from https://github.com/user/myfw   # impor template dari git
 ainstruct template clone mylaravel laravel       # customisasi built-in → milik Anda
 ainstruct template update mylaravel --from laravel   # tarik ulang dari built-in
+ainstruct template update myfw                   # tanpa --from: tarik dari sumber tersimpan
 ainstruct template delete myfw --force           # hapus template custom (built-in DITOLAK)
 ainstruct template path mylaravel                # lokasi direktori (untuk diedit)
 ```
 
 - `create` membuat scaffold kosong (`ai-instructions.md` konstitusi + modul) yang
-  terbuka diedit. `clone` menyalin template (built-in atau custom) sebagai milik Anda.
-  `update` menimpa salinan Anda dari sumber (default: built-in senama; `--from <sumber>`
-  untuk sumber lain). `delete` menghapus template custom; built-in selalu DITOLAK dengan
-  pesan arahkan ke clone.
+  terbuka diedit; dengan `--from <sumber>` ia mengimpor template dari **sumber git**
+  (URL `https`/`ssh` atau jalur repo git lokal) — berguna untuk berbagi template
+  antar proyek/mesin tanpa menunggu repo ini. `clone` menyalin template
+  (built-in atau custom) sebagai milik Anda. `update` menimpa salinan Anda dari
+  sumber (`--from <sumber>` untuk sumber lain; tanpa `--from`, template yang pernah
+  diimpor ditarik ulang dari **sumber tersimpan**). `delete` menghapus template
+  custom; built-in selalu DITOLAK dengan pesan arahkan ke clone.
+- Sumber git dan ref (`--ref <branch|tag>`) dicatat ke file `ainstruct.source` di
+  dalam folder template — `update` tanpa `--from` membaca file ini. Impor butuh
+  perintah `git`; hasil impor adalah salinan tanpa `.git/` (bukan repo kerja).
 - Operasi destruktif (`delete`, `update`) butuh konfirmasi `[y/N]`; di lingkungan
   non-interaktif/CI wajib `--force`.
 - Setelah template custom tersedia, distribusikan seperti biasa: `ainstruct myfw`.

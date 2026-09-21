@@ -170,6 +170,8 @@ final class HelpCommand extends Command
         $this->style()->section('Contoh');
         $this->style()->bullet($this->style()->cyan('ainstruct template clone mylaravel laravel'));
         $this->style()->bullet($this->style()->cyan('ainstruct template create blank --force'));
+        $this->style()->bullet($this->style()->cyan('ainstruct template create myfw --from https://github.com/user/myfw'));
+        $this->style()->bullet($this->style()->cyan('ainstruct template update myfw'));
         $this->style()->blank();
 
         return 0;
@@ -215,9 +217,9 @@ final class HelpCommand extends Command
     {
         return [
             ['name' => 'list', 'description' => 'Lihat semua template (built-in + custom).'],
-            ['name' => 'create <nama> [--force]', 'description' => 'Buat template kosong baru.'],
+            ['name' => 'create <nama> [--from <sumber>] [--ref <ref>] [--force]', 'description' => 'Buat scaffold kosong atau impor template dari git (URL/jalur repo).'],
             ['name' => 'clone <nama> <sumber> [--force]', 'description' => 'Salin template sumber (built-in/custom).'],
-            ['name' => 'update <nama> [--from <sumber>] [--force]', 'description' => 'Timpa custom dari sumber.'],
+            ['name' => 'update <nama> [--from <sumber>] [--ref <ref>] [--force]', 'description' => 'Timpa custom dari sumber; tanpa --from menarik sumber tersimpan.'],
             ['name' => 'delete <nama> [--force]', 'description' => 'Hapus template custom (built-in terproteksi).'],
             ['name' => 'path <nama>', 'description' => 'Tampilkan path template (custom dulu, baru built-in).'],
         ];

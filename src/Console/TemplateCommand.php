@@ -8,6 +8,7 @@ use Lace\Ainstruct\Actions\Template\CreateTemplateAction;
 use Lace\Ainstruct\Actions\Template\DeleteTemplateAction;
 use Lace\Ainstruct\Actions\Template\GetTemplatePathAction;
 use Lace\Ainstruct\Actions\Template\GetTemplatesAction;
+use Lace\Ainstruct\Actions\Template\ImportTemplateAction;
 use Lace\Ainstruct\Actions\Template\UpdateTemplateAction;
 use Lace\Ainstruct\Enums\TemplateOrigin;
 use Lace\Ainstruct\Exceptions\AinstructException;
@@ -23,6 +24,7 @@ final class TemplateCommand extends Command
     public function __construct(
         private GetTemplatesAction $getTemplatesAction,
         private CreateTemplateAction $createTemplateAction,
+        private ImportTemplateAction $importTemplateAction,
         private CloneTemplateAction $cloneTemplateAction,
         private UpdateTemplateAction $updateTemplateAction,
         private DeleteTemplateAction $deleteTemplateAction,
@@ -115,6 +117,13 @@ final class TemplateCommand extends Command
         }
 
         $force = $input->hasFlag('--force');
+        $from = $input->flagValue('--from');
+        $ref = $input->flagValue('--ref');
+
+        // --from <sumber git> (URL/jalur repo) → impor template dari luar.
+        if ($from !== null && $from !== '') {
+            return $this->import($name, $from, $ref, $force);
+        }
 
         $template = $this->createTemplateAction->handle([
             'name' => $name,
@@ -124,6 +133,23 @@ final class TemplateCommand extends Command
         $this->style()->success("Template '{$template->name}' berhasil dibuat.");
         $this->style()->keyValue('Lokasi', $template->directory);
         $this->style()->keyValue('Edit', 'ai-instructions.md (konstitusi), ai-instructions/ (modul)', 'dim');
+        $this->style()->keyValue('Distribusikan', 'ainstruct '.$template->name);
+        $this->style()->blank();
+
+        return 0;
+    }
+
+    private function import(string $name, string $from, ?string $ref, bool $force): int
+    {
+        $template = $this->importTemplateAction->handle([
+            'name' => $name,
+            'source' => $from,
+            'ref' => $ref,
+            'force' => $force,
+        ]);
+
+        $this->style()->success("Template '{$template->name}' berhasil diimpor dari {$from}.");
+        $this->style()->keyValue('Lokasi', $template->directory);
         $this->style()->keyValue('Distribusikan', 'ainstruct '.$template->name);
         $this->style()->blank();
 
@@ -162,6 +188,7 @@ final class TemplateCommand extends Command
     {
         $name = (string) ($input->argument(1) ?? '');
         $from = $input->flagValue('--from');
+        $ref = $input->flagValue('--ref');
         $force = $input->hasFlag('--force');
 
         if ($name === '') {
@@ -171,7 +198,7 @@ final class TemplateCommand extends Command
             return $this->usage();
         }
 
-        $sourceLabel = $from !== null && $from !== '' ? $from : "(built-in {$name})";
+        $sourceLabel = $from !== null && $from !== '' ? $from : '(sumber tersimpan / built-in senama)';
 
         $confirmed = $this->confirmOrFail(
             $force,
@@ -192,6 +219,7 @@ final class TemplateCommand extends Command
         $template = $this->updateTemplateAction->handle([
             'name' => $name,
             'from' => $from,
+            'ref' => $ref,
             'force' => true,
         ]);
 
@@ -274,11 +302,13 @@ final class TemplateCommand extends Command
         $this->style()->info('Template AI Instructions, manajemen template');
         $this->style()->section('Usage');
         $this->style()->bullet($this->style()->cyan('template list').'                  Lihat semua template');
-        $this->style()->bullet($this->style()->cyan('template create <nama>').' [--force]   Buat template kosong baru');
+        $this->style()->bullet($this->style()->cyan('template create <nama>').' [--from <sumber>] [--ref <ref>] [--force]   Buat scaffold atau impor dari git');
         $this->style()->bullet($this->style()->cyan('template clone <nama> <sumber>').' [--force]   Salin template sumber (built-in/custom)');
-        $this->style()->bullet($this->style()->cyan('template update <nama>').' [--from <sumber>] [--force]   Timpa custom dari sumber');
+        $this->style()->bullet($this->style()->cyan('template update <nama>').' [--from <sumber>] [--ref <ref>] [--force]   Timpa custom dari sumber');
         $this->style()->bullet($this->style()->cyan('template delete <nama>').' [--force]   Hapus template custom');
         $this->style()->bullet($this->style()->cyan('template path <nama>').'           Tampilkan path template (custom dulu, baru built-in)');
+        $this->style()->blank();
+        $this->style()->bullet($this->style()->dim('--from <sumber> pada create/update menerima URL git (https/ssh) atau jalur repo lokal.'));
         $this->style()->blank();
 
         return 0;
