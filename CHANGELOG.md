@@ -23,6 +23,20 @@ mengikuti [Semantic Versioning](https://semver.org/). Versi diambil dari git tag
   `--from` menarik ulang dari sumber tersimpan. Opsi `--ref <branch|tag>` untuk
   mem-pin ref tertentu. Impor memakai `git clone` dan hasilnya salinan tanpa `.git/`.
 
+### Fixed
+
+- `template create --from ~/repo` dan sumber git bertanda tilde kini berhasil
+  diimpor: tilde diekspansi ke direktori home sebelum `git clone` (sebelumnya
+  `escapeshellarg` memblokir ekspansi, sumber `~/...` tak pernah bisa dipakai).
+- `template clone` tidak lagi mewarisi `ainstruct.source` dari template sumber.
+  Klon adalah salinan independen; `template update` pada klon tidak akan menarik
+  ulang dari repo asal sumber.
+
+### CI
+
+- Workflow Tests kini menjalankan phpunit dan smoke test WebUI (`php -S` + API +
+  tipe MIME aset statis) sehingga regresi router ikut terdeteksi di CI.
+
 ## [0.2.5] - 2026-09-20
 
 Rilis pertama yang di-tag (tag git `v0.2.5`).

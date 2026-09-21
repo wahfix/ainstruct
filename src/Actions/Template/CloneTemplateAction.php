@@ -8,6 +8,7 @@ use Lace\Ainstruct\Contracts\Repository\InstructionFileRepositoryContract;
 use Lace\Ainstruct\Contracts\Repository\TemplateRepositoryContract;
 use Lace\Ainstruct\Enums\TemplateOrigin;
 use Lace\Ainstruct\Exceptions\InvalidOperationException;
+use Lace\Ainstruct\Services\Template\SourceImporter;
 use Lace\Ainstruct\Values\Template;
 
 final class CloneTemplateAction extends Action implements RuledActionContract
@@ -50,6 +51,15 @@ final class CloneTemplateAction extends Action implements RuledActionContract
         }
 
         $this->files->copyDirectory($sourceTemplate->directory, $target);
+
+        // Klon adalah salinan independen: jangan warisi metadata sumber git
+        // (ainstruct.source) dari template sumber, supaya `template update`
+        // pada klon tidak menarik ulang dari repo asal sumber.
+        $inheritedSource = $target.DIRECTORY_SEPARATOR.SourceImporter::SOURCE_FILE;
+
+        if ($this->files->isFile($inheritedSource)) {
+            $this->files->remove($inheritedSource);
+        }
 
         return new Template($name, $target, TemplateOrigin::CUSTOM);
     }

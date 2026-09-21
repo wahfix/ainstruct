@@ -30,7 +30,7 @@ final class ImportTemplateAction extends Action implements RuledActionContract
     protected function handler(array $payload): Template
     {
         $name = $payload['name'];
-        $source = $payload['source'];
+        $source = $this->importer->expandSource($payload['source']);
         $ref = $payload['ref'] ?? null;
         $force = (bool) ($payload['force'] ?? false);
 

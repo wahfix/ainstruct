@@ -251,3 +251,84 @@ jobs:
             || { echo "FAIL: status tidak menyebut belum didistribusikan"; exit 1; }
 
           echo "smoke test: PASS"
+
+  phpunit:
+    runs-on: ubuntu-latest
+    name: PHPUnit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+        name: composer install
+      - run: vendor/bin/phpunit
+        name: phpunit
+
+  webui-smoke:
+    runs-on: ubuntu-latest
+    name: WebUI smoke test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+        name: composer install
+      - name: Smoke test webui (php -S, API, static MIME)
+        run: |
+          set -euo pipefail
+          REPO="$(pwd)"
+          TMP="$(mktemp -d)"
+          BODY="$TMP/body"
+          export AINSTRUCT_HOME="$TMP/ahome"
+          mkdir -p "$AINSTRUCT_HOME"
+          php -S 127.0.0.1:8799 -t "$REPO/web" "$REPO/web/index.php" >"$TMP/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 10 http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.5
+          done
+          if ! curl -fsS --max-time 10 http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
+            echo "FAIL: server webui tidak siap setelah 10 detik"
+            tail -5 "$TMP/server.log" 2>/dev/null || true
+            exit 1
+          fi
+          # Body selalu ditulis ke file lalu di-grep. Jangan pernah pipe curl
+          # ke grep -q: grep keluar saat match pertama, curl dapat SIGPIPE
+          # (exit 23) dan pipefail mematikan job secara diam-diam.
+          # Aset statis harus disajikan sebagai file nyata, bukan shell SPA.
+          # Regresi router pernah mengirim index.html (text/html) untuk aset;
+          # MIME .js berbeda antar versi PHP, jadi yang dicek adalah isi body.
+          for ASSET in assets/app.js assets/styles.css assets/logo.svg; do
+            curl -fsS --max-time 10 -o "$BODY" "http://127.0.0.1:8799/$ASSET"
+            test -s "$BODY" || { echo "FAIL: $ASSET kosong"; exit 1; }
+            grep -qi '<!doctype html>' "$BODY" && { echo "FAIL: $ASSET disajikan sebagai shell SPA (regresi router)"; exit 1; }
+          done
+          curl -fsS --max-time 10 -o "$BODY" http://127.0.0.1:8799/assets/app.js
+          grep -q "'use strict'" "$BODY" || { echo "FAIL: app.js bukan isi JS nyata"; exit 1; }
+          # Kontrol positif: path non-aset memang melayani shell SPA.
+          curl -fsS --max-time 10 -o "$BODY" http://127.0.0.1:8799/
+          grep -qi '<!doctype html>' "$BODY" || { echo "FAIL: shell SPA tidak dilayani untuk /"; exit 1; }
+          grep -q 'WebUI Template' "$BODY" || { echo "FAIL: shell SPA tidak memuat judul WebUI"; exit 1; }
+          curl -fsS --max-time 10 -X POST -o "$BODY" http://127.0.0.1:8799/api/templates \
+            -H 'Content-Type: application/json' -d '{"name":"webtpl"}'
+          grep -q '"ok":true' "$BODY" || { echo "FAIL: create template gagal"; cat "$BODY"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" http://127.0.0.1:8799/api/templates/webtpl
+          grep -q '"origin":"custom"' "$BODY" || { echo "FAIL: template webtpl bukan custom"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" "http://127.0.0.1:8799/api/templates/webtpl/tree?path="
+          grep -q '"entries"' "$BODY" || { echo "FAIL: tree tidak memuat entries"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" "http://127.0.0.1:8799/api/templates/webtpl/file?path=ai-instructions.md"
+          grep -q '"content"' "$BODY" || { echo "FAIL: file tidak memuat content"; exit 1; }
+          CODE="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X DELETE http://127.0.0.1:8799/api/templates/webtpl)"
+          test "$CODE" = "409" || { echo "FAIL: delete tanpa force harus 409, dapat $CODE"; exit 1; }
+          CODE="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "http://127.0.0.1:8799/api/templates/webtpl/file?path=..%2F..%2Fetc%2Fpasswd")"
+          test "$CODE" = "422" || { echo "FAIL: traversal harus 422, dapat $CODE"; exit 1; }
+          echo "webui smoke: PASS"

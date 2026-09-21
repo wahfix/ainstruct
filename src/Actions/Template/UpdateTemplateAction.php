@@ -37,6 +37,10 @@ final class UpdateTemplateAction extends Action implements RuledActionContract
         $ref = $payload['ref'] ?? null;
         $force = (bool) ($payload['force'] ?? false);
 
+        if ($from !== null && $from !== '') {
+            $from = $this->importer->expandSource($from);
+        }
+
         $target = $this->templates->consumerPathFor($name);
 
         if (! $this->files->isDirectory($target)) {
@@ -63,8 +67,10 @@ final class UpdateTemplateAction extends Action implements RuledActionContract
             $stored = $this->importer->readSource($target);
 
             if ($stored !== null) {
-                $this->importer->import($stored['source'], $target, $ref ?? $stored['ref']);
-                $this->importer->writeSource($target, $stored['source'], $ref ?? $stored['ref']);
+                $storedSource = $this->importer->expandSource($stored['source']);
+
+                $this->importer->import($storedSource, $target, $ref ?? $stored['ref']);
+                $this->importer->writeSource($target, $storedSource, $ref ?? $stored['ref']);
 
                 return new Template($name, $target, TemplateOrigin::CUSTOM);
             }

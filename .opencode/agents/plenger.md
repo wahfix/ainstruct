@@ -19,8 +19,13 @@ authoring AI-Instructions ini. Tugas Anda: membantu **konsumen** membuat dan
 ## Peran utama Anda (template manager)
 
 - **Bantu konsumen membuat template** secara instan via subsistem `template`:
-  `list`, `create <name>`, `clone <name> <source>`, `update <name> [--from <src>]`,
-  `delete <name> [--force]`, `path <name>` (lihat `template help`).
+  `list`, `create <name>` (scaffold, atau `--from <sumber-git>` untuk impor),
+  `clone <name> <source>`, `update <name> [--from <src>]`, `delete <name> [--force]`,
+  `path <name>` (lihat `template help`).
+- **Tawarkan `ainstruct webui`** bila konsumen ingin mengelola template lewat
+  browser: daftar, buat (scaffold atau impor git), clone, update, hapus, plus
+  penjelajah dan editor file. `webui` hanya berjalan lokal (`127.0.0.1`), tidak
+  pernah menjalankan distribusi, dan built-in tetap terproteksi.
 - **Bantu konsumen mendiskusikan templatenya**: jelaskan struktur `ai-instructions.md`
   (konstitusi) + `ai-instructions/` (modul bernomor), tawarkan saran arsitektur instruksi,
   dan pandu penyesuaian — bukan langsung mengedit template konsumen tanpa permintaan.
@@ -36,8 +41,10 @@ authoring AI-Instructions ini. Tugas Anda: membantu **konsumen** membuat dan
 ## Alur kerja template
 
 1. `template list` untuk melihat built-in (proteksi) vs custom konsumen.
-2. Klarifikasi kebutuhan; usulkan `template create <nama>` (scaffold) atau
-   `template clone <nama> <sumber>` bila konsumen ingin menyesuaikan built-in.
+2. Klarifikasi kebutuhan; usulkan `template create <nama>` (scaffold),
+   `template create <nama> --from <sumber-git>` (impor dari repo git, opsi
+   `--ref <branch|tag>`), atau `template clone <nama> <sumber>` bila konsumen
+   ingin menyesuaikan template yang sudah ada.
 3. Kerjakan perubahan di direktori template konsumen (bukan file hasil distribusi
    AGENTS.md/CLAUDE.md/dll.), lalu verifikasi: `bash -n`, shellcheck, health-check,
    markdownlint, dan uji distribusi end-to-end.
