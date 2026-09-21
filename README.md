@@ -251,6 +251,27 @@ ainstruct template path mylaravel                # lokasi direktori (untuk diedi
   non-interaktif/CI wajib `--force`.
 - Setelah template custom tersedia, distribusikan seperti biasa: `ainstruct myfw`.
 
+## WebUI: Kelola Template di Browser
+
+`ainstruct webui` menjalankan server lokal dan antarmuka browser untuk mengelola
+template konsumen: daftar, buat (scaffold atau impor git), clone, update, hapus,
+plus penjelajah dan editor file. Template built-in tetap terproteksi: bisa dibaca,
+tidak bisa dihapus, diupdate, atau ditulis dari antarmuka.
+
+```bash
+ainstruct webui                  # server 127.0.0.1:8787 + buka browser
+ainstruct webui --no-open        # tanpa membuka browser
+ainstruct webui --port 9000      # port tertentu (default 8787; port bebas berikutnya bila sibuk)
+```
+
+- Server memakai PHP bawaan (`php -S`) tanpa dependency runtime tambahan; detail
+  API dan keamanan ada di `web/README.md`.
+- Command ini tidak pernah menjalankan distribusi, jadi aman dijalankan dari
+  direktori mana pun. Bind default `127.0.0.1`; jangan expose ke jaringan publik.
+- Operasi destruktif (update/delete) memakai dialog konfirmasi; API-nya menolak
+  tanpa `force: true`. Path file dibatasi di dalam direktori template; traversal,
+  symlink keluar, biner, dan file di atas 2 MB ditolak.
+
 ## Operator Memory — Mesin Adaptif di Setiap Salinan
 
 Setiap **salinan repository ini** (fork, clone, atau distribusi via adaptor)

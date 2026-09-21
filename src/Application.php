@@ -11,6 +11,7 @@ use Lace\Ainstruct\Console\Input;
 use Lace\Ainstruct\Console\ResetCommand;
 use Lace\Ainstruct\Console\StatusCommand;
 use Lace\Ainstruct\Console\TemplateCommand;
+use Lace\Ainstruct\Console\WebuiCommand;
 use Lace\Ainstruct\Console\WipeCommand;
 
 final class Application
@@ -27,6 +28,7 @@ final class Application
         'wipe' => WipeCommand::class,
         'reset' => ResetCommand::class,
         'template' => TemplateCommand::class,
+        'webui' => WebuiCommand::class,
         'init' => InitCommand::class,
         'help' => HelpCommand::class,
     ];

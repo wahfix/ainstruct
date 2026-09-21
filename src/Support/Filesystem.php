@@ -46,6 +46,11 @@ final class Filesystem
         file_put_contents($path, $content);
     }
 
+    public function readFile(string $path): string
+    {
+        return (string) file_get_contents($path);
+    }
+
     public function filesIdentical(string $a, string $b): bool
     {
         if (! is_file($a) || ! is_file($b)) {

@@ -50,7 +50,7 @@ final class InstructionFileRepository implements InstructionFileRepositoryContra
 
     public function readFile(string $path): string
     {
-        return (string) file_get_contents($path);
+        return $this->fs->readFile($path);
     }
 
     public function copyDirectory(string $from, string $to): void

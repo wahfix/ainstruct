@@ -20,6 +20,7 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('reset <framework>', $plain);
         $this->assertStringContainsString('wipe', $plain);
         $this->assertStringContainsString('template', $plain);
+        $this->assertStringContainsString('webui', $plain);
         $this->assertStringContainsString('help', $plain);
     }
 
@@ -29,6 +30,18 @@ final class HelpCommandTest extends TestCase
 
         $this->assertSame(0, $exit);
         $this->assertStringContainsString('Available commands', $this->stripAnsi($output));
+    }
+
+    public function test_help_webui_shows_detail(): void
+    {
+        [$exit, $output] = $this->runCapture($this->makeApplication(), ['help', 'webui']);
+
+        $plain = $this->stripAnsi($output);
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('ainstruct webui', $plain);
+        $this->assertStringContainsString('--port', $plain);
+        $this->assertStringContainsString('--no-open', $plain);
     }
 
     public function test_dash_help_flag_lists_available_commands(): void

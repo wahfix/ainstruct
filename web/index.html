@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebUI Template: ainstruct</title>
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/assets/logo.svg" alt="Logo ainstruct" width="26" height="32">
+      <span class="brand-name">ainstruct</span>
+      <span class="brand-sub">WebUI Template</span>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="btn" id="reload-btn">Muat ulang</button>
+      <button type="button" class="btn primary" id="create-btn">Buat template</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar" aria-label="Daftar template">
+      <p id="list-loading" class="notice">Memuat daftar template...</p>
+      <p id="list-error" class="notice is-error" hidden></p>
+
+      <section class="group" id="custom-group" hidden>
+        <h2 class="group-title">Custom</h2>
+        <ul class="template-list" id="custom-list"></ul>
+      </section>
+
+      <section class="group" id="builtin-group" hidden>
+        <h2 class="group-title">Built-in terproteksi</h2>
+        <ul class="template-list" id="builtin-list"></ul>
+      </section>
+
+      <p id="list-empty" class="notice" hidden>Belum ada template. Buat template pertama dengan tombol Buat template.</p>
+    </aside>
+
+    <section class="panel" aria-live="polite">
+      <p id="welcome" class="empty">Pilih template di kiri untuk melihat isi dan opsi kelola.</p>
+
+      <div id="detail" hidden>
+        <div class="detail-head">
+          <div>
+            <h1 class="detail-name" id="detail-name"></h1>
+            <p class="detail-meta">
+              <span id="detail-origin"></span>
+              <span class="muted" id="detail-directory"></span>
+            </p>
+            <p class="muted" id="detail-source" hidden></p>
+          </div>
+          <div class="detail-actions">
+            <button type="button" class="btn" id="clone-btn">Clone</button>
+            <button type="button" class="btn" id="update-btn">Update</button>
+            <button type="button" class="btn danger" id="delete-btn">Hapus</button>
+          </div>
+        </div>
+
+        <div class="explorer">
+          <nav class="breadcrumb" id="breadcrumb" aria-label="Lokasi di dalam template"></nav>
+          <p id="tree-loading" class="notice">Memuat isi template...</p>
+          <p id="tree-error" class="notice is-error" hidden></p>
+          <ul class="entries" id="entries"></ul>
+        </div>
+
+        <div class="editor" id="editor" hidden>
+          <div class="editor-head">
+            <div>
+              <h2 class="editor-path" id="editor-path"></h2>
+              <p class="muted" id="editor-meta"></p>
+              <p class="notice" id="editor-readonly" hidden>Hanya dibaca. Template built-in terproteksi; clone untuk mengedit salinan konsumen.</p>
+            </div>
+          </div>
+          <textarea class="editor-area" id="editor-area" spellcheck="false" aria-label="Isi file"></textarea>
+          <div class="editor-actions">
+            <span id="editor-error" class="dialog-error" role="alert" hidden></span>
+            <button type="button" class="btn" id="editor-cancel">Batal</button>
+            <button type="button" class="btn primary" id="editor-save">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <dialog id="create-dialog" class="dialog">
+    <form method="dialog" id="create-form">
+      <h2 class="dialog-title">Buat template</h2>
+      <p class="dialog-desc">Scaffold kosong yang bisa diedit, atau impor dari sumber git.</p>
+      <div class="field">
+        <label for="create-name">Nama</label>
+        <input id="create-name" name="name" type="text" autocomplete="off" required
+               pattern="[A-Za-z0-9_-]+" maxlength="64"
+               placeholder="mis. mylaravel">
+        <p class="field-hint">Hanya huruf, angka, garis bawah, dan strip.</p>
+      </div>
+      <div class="field">
+        <label for="create-source">Sumber (opsional)</label>
+        <input id="create-source" name="source" type="text" autocomplete="off"
+               placeholder="https://github.com/user/repo atau jalur repo lokal">
+        <p class="field-hint">URL git atau jalur repo lokal. Kosongkan untuk template kosong.</p>
+      </div>
+      <div class="field">
+        <label for="create-ref">Ref (opsional)</label>
+        <input id="create-ref" name="ref" type="text" autocomplete="off"
+               placeholder="main, v1.0, dll.">
+        <p class="field-hint">Branch atau tag sumber git. Kosongkan untuk default remote.</p>
+      </div>
+      <label class="check">
+        <input id="create-force" name="force" type="checkbox">
+        <span>Timpa nama yang sudah ada</span>
+      </label>
+      <p id="create-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close="create-dialog">Batal</button>
+        <button type="submit" class="btn primary">Buat</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="clone-dialog" class="dialog">
+    <form method="dialog" id="clone-form">
+      <h2 class="dialog-title">Clone template</h2>
+      <p class="dialog-desc">Salin template sumber menjadi milik konsumen, lalu bebas diedit.</p>
+      <div class="field">
+        <label for="clone-name">Nama baru</label>
+        <input id="clone-name" name="name" type="text" autocomplete="off" required
+               pattern="[A-Za-z0-9_-]+" maxlength="64" placeholder="mis. mylaravel">
+      </div>
+      <div class="field">
+        <label for="clone-source">Sumber</label>
+        <input id="clone-source" name="source" type="text" autocomplete="off" required
+               placeholder="laravel atau nama template custom">
+        <p class="field-hint">Nama template yang sudah ada (built-in atau custom).</p>
+      </div>
+      <label class="check">
+        <input id="clone-force" name="force" type="checkbox">
+        <span>Timpa nama yang sudah ada</span>
+      </label>
+      <p id="clone-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close="clone-dialog">Batal</button>
+        <button type="submit" class="btn primary">Clone</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="update-dialog" class="dialog">
+    <form method="dialog" id="update-form">
+      <h2 class="dialog-title">Update template</h2>
+      <p class="dialog-desc">Menarik ulang isi template custom lalu menimpa isi saat ini.</p>
+      <div class="field">
+        <label for="update-source">Sumber (opsional)</label>
+        <input id="update-source" name="source" type="text" autocomplete="off"
+               placeholder="kosongkan untuk sumber tersimpan">
+        <p class="field-hint">Kosongkan untuk memakai sumber tersimpan (ainstruct.source) atau built-in senama.</p>
+      </div>
+      <div class="field">
+        <label for="update-ref">Ref (opsional)</label>
+        <input id="update-ref" name="ref" type="text" autocomplete="off"
+               placeholder="main, v1.0, dll.">
+        <p class="field-hint">Branch atau tag sumber git. Kosongkan untuk default remote.</p>
+      </div>
+      <p class="dialog-warning">Isi template yang sudah diedit akan diganti. Lanjutkan?</p>
+      <p id="update-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close="update-dialog">Batal</button>
+        <button type="submit" class="btn primary" id="update-confirm">Update</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="delete-dialog" class="dialog">
+    <form method="dialog" id="delete-form">
+      <h2 class="dialog-title">Hapus template</h2>
+      <p class="dialog-desc">Template custom <strong id="delete-name"></strong> akan dihapus permanen.</p>
+      <p class="dialog-warning">Tindakan ini tidak bisa dibatalkan.</p>
+      <p id="delete-error" class="dialog-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-close="delete-dialog">Batal</button>
+        <button type="submit" class="btn danger" id="delete-confirm">Hapus</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>
