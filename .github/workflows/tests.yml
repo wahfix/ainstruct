@@ -282,6 +282,7 @@ jobs:
       - name: Smoke test webui (php -S, API, static MIME)
         run: |
           set -euo pipefail
+          set -x
           REPO="$(pwd)"
           TMP="$(mktemp -d)"
           export AINSTRUCT_HOME="$TMP/ahome"
@@ -295,6 +296,11 @@ jobs:
             fi
             sleep 0.5
           done
+          echo "=== server.log ==="
+          cat "$TMP/server.log" 2>/dev/null || true
+          echo "=== app.js headers ==="
+          curl -sI --max-time 10 http://127.0.0.1:8799/assets/app.js || true
+          echo "=== readiness check ==="
           if ! curl -fsS --max-time 10 http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
             echo "FAIL: server webui tidak siap setelah 10 detik"
             tail -5 "$TMP/server.log" 2>/dev/null || true
