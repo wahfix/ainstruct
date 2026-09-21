@@ -19,6 +19,10 @@ Opsi: `--host <ip>`, `--port <port>`, `--no-open` (lihat `ainstruct help webui`)
 - Kelola custom: create (scaffold atau impor git), clone, update, delete.
 - Penjelajah dan editor file template; built-in hanya bisa dibaca.
 - Informasi `ainstruct.source` untuk template yang pernah diimpor dari git.
+- **Sesi opencode**: jalankan `opencode run` di direktori proyek pilihan
+  (default: direktori tempat `ainstruct webui` dijalankan), pantau output live
+  (polling; server `php -S` single-thread sehingga proses di-spawn terdetach),
+  hentikan proses, lanjutkan sesi lama via session ID, dan hapus catatan sesi.
 
 ## Keamanan
 
@@ -29,6 +33,18 @@ Opsi: `--host <ip>`, `--port <port>`, `--no-open` (lihat `ainstruct help webui`)
   ditolak. File biner dan file di atas 2 MB tidak bisa dibaca/ditulis.
 - Permintaan mutasi dari origin selain localhost (127.0.0.1, localhost, ::1)
   ditolak guard CSRF lokal. Jangan expose server ini ke jaringan publik.
+- **Sesi opencode menjalankan perintah eksternal** di direktori yang dipilih
+  pengguna. Restriksi: satu-satunya perintah yang dijalankan adalah
+  `opencode run` dengan argumen yang di-escape penuh — tidak ada lintasan
+  perintah shell dari input bebas. `--auto` hanya dikirim bila dicentang
+  pengguna (mengizinkan agent mengubah file tanpa konfirmasi). Jalankan server
+  hanya pada `127.0.0.1`; jangan expose ke jaringan publik.
+- Menjalankan sesi hanya didukung di POSIX (Linux/macOS/BSD/Android); di
+  Windows endpoint mulai sesi mengembalikan 409.
+- Catatan sesi disimpan di state dir WebUI
+  (`AINSTRUCT_STATE_HOME` → `XDG_STATE_HOME` → `HOME/.local/state`,
+  lalu `ainstruct/webui/opencode/`). Menghapus sesi permanen butuh
+  `force: true`; proses yang masih berjalan ikut dihentikan.
 
 ## API
 
@@ -45,10 +61,28 @@ Semua respons JSON dengan bentuk `{ok:true,data}` atau `{ok:false,error}`.
 | GET | `/api/templates/{name}/tree?path=` | Isi direktori template |
 | GET | `/api/templates/{name}/file?path=` | Baca file teks |
 | PUT | `/api/templates/{name}/file` | Tulis file (custom saja) |
+| GET | `/api/opencode/status` | Ketersediaan binary opencode + versi + direktori default |
+| GET | `/api/opencode/sessions` | Daftar sesi yang dijalankan dari WebUI (terbaru dulu) |
+| POST | `/api/opencode/sessions` | Mulai sesi `opencode run` (direktori + prompt) |
+| GET | `/api/opencode/sessions/{id}` | Meta + status + output sesi (tail dibatasi) |
+| POST | `/api/opencode/sessions/{id}/stop` | Hentikan proses sesi |
+| DELETE | `/api/opencode/sessions/{id}` | Hapus catatan + log sesi (butuh force) |
 
-Kode status: 200 sukses, 201 dibuat (create), 403 terproteksi atau asal
-dilarang, 404 template atau rute tidak ditemukan, 405 metode tidak diizinkan,
-409 konflik/opsi tidak sah, 422 validasi, 500 kegagalan lain.
+Body `POST /api/opencode/sessions`:
+
+| Field | Wajib | Keterangan |
+| --- | --- | --- |
+| `directory` | ya | Direktori proyek (harus sudah ada; realpath) |
+| `prompt` | ya | Instruksi untuk opencode (maks 10.000 karakter) |
+| `model` | tidak | Diteruskan sebagai `opencode run --model <nilai>` |
+| `agent` | tidak | Diteruskan sebagai `opencode run --agent <nilai>` |
+| `session` | tidak | ID sesi opencode untuk lanjut (`--session`) |
+| `auto` | tidak | Bool; menambah `--auto` (setujui izin otomatis) |
+
+Kode status: 200 sukses, 201 dibuat (create/start), 403 terproteksi atau asal
+dilarang, 404 template/sesi atau rute tidak ditemukan, 405 metode tidak
+diizinkan, 409 konflik/opsi tidak sah (termasuk Windows untuk sesi), 422
+validasi, 500 kegagalan lain.
 
 ## Susunan file
 

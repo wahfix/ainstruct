@@ -15,12 +15,14 @@
       <span class="brand-sub">WebUI Template</span>
     </div>
     <div class="topbar-actions">
+      <button type="button" class="btn tab-btn active" id="templates-tab">Template</button>
+      <button type="button" class="btn tab-btn" id="opencode-tab">Sesi OpenCode</button>
       <button type="button" class="btn" id="reload-btn">Muat ulang</button>
       <button type="button" class="btn primary" id="create-btn">Buat template</button>
     </div>
   </header>
 
-  <main class="layout">
+  <main class="layout" id="template-view">
     <aside class="sidebar" aria-label="Daftar template">
       <p id="list-loading" class="notice">Memuat daftar template...</p>
       <p id="list-error" class="notice is-error" hidden></p>
@@ -83,6 +85,71 @@
       </div>
     </section>
   </main>
+
+  <section class="oc-panel" id="opencode-view" hidden>
+    <header class="oc-head">
+      <h1 class="detail-name">Sesi OpenCode</h1>
+      <p class="oc-status" id="oc-status">Memeriksa opencode...</p>
+    </header>
+
+    <form id="oc-form" class="oc-form">
+      <div class="field">
+        <label for="oc-directory">Direktori proyek</label>
+        <input id="oc-directory" name="directory" type="text" autocomplete="off" placeholder="/absolut/path/ke/proyek">
+        <p class="field-hint">Default: direktori tempat `ainstruct webui` dijalankan. Direktori harus sudah ada.</p>
+      </div>
+      <div class="field">
+        <label for="oc-prompt">Instruksi (prompt)</label>
+        <textarea id="oc-prompt" name="prompt" rows="3" spellcheck="false" placeholder="Contoh: perbaiki bug di X, tambahkan test, dan perbarui dokumentasi"></textarea>
+      </div>
+      <div class="oc-grid">
+        <div class="field">
+          <label for="oc-model">Model (opsional)</label>
+          <input id="oc-model" name="model" type="text" autocomplete="off" placeholder="provider/model#variant">
+        </div>
+        <div class="field">
+          <label for="oc-agent">Agent (opsional)</label>
+          <input id="oc-agent" name="agent" type="text" autocomplete="off" placeholder="build">
+        </div>
+        <div class="field">
+          <label for="oc-session">Lanjutkan sesi (opsional)</label>
+          <input id="oc-session" name="session" type="text" autocomplete="off" placeholder="ses_...">
+          <p class="field-hint">ID sesi dari `opencode session list` di direktori proyek.</p>
+        </div>
+      </div>
+      <label class="check">
+        <input id="oc-auto" name="auto" type="checkbox">
+        <span>Auto-setujui izin alat (opencode --auto)</span>
+      </label>
+      <div class="oc-form-actions">
+        <span id="oc-run-error" class="dialog-error" role="alert" hidden></span>
+        <button type="submit" class="btn primary">Jalankan sesi</button>
+      </div>
+    </form>
+
+    <section class="oc-sessions" aria-live="polite">
+      <h2 class="group-title">Sesi yang dijalankan dari WebUI</h2>
+      <p id="oc-list-loading" class="notice">Memuat sesi...</p>
+      <p id="oc-list-error" class="notice is-error" hidden></p>
+      <p id="oc-empty" class="notice" hidden>Belum ada sesi. Isi direktori dan instruksi lalu tekan Jalankan sesi.</p>
+      <ul class="oc-list" id="oc-list"></ul>
+    </section>
+
+    <section class="oc-output" id="oc-output" hidden>
+      <div class="oc-output-head">
+        <div class="oc-output-info">
+          <h2 class="oc-output-title" id="oc-output-title"></h2>
+          <p class="muted" id="oc-output-meta"></p>
+        </div>
+        <div class="oc-output-actions">
+          <button type="button" class="btn danger" id="oc-stop-btn">Hentikan</button>
+          <button type="button" class="btn" id="oc-refresh-btn">Segarkan</button>
+          <button type="button" class="btn" id="oc-close-btn">Tutup</button>
+        </div>
+      </div>
+      <pre class="oc-output-pre" id="oc-output-pre" tabindex="0"></pre>
+    </section>
+  </section>
 
   <div id="toast" class="toast" role="status" hidden></div>
 

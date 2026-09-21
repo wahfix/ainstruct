@@ -16,6 +16,16 @@ const state = {
   editorDirty: false,
 };
 
+const oc = {
+  status: null,
+  sessions: [],
+  listKey: '',
+  activeId: null,
+  pollTimer: null,
+  outTimer: null,
+  directorySet: false,
+};
+
 const els = {
   listLoading: $('list-loading'),
   listError: $('list-error'),
@@ -68,6 +78,30 @@ const els = {
   deleteForm: $('delete-form'),
   deleteName: $('delete-name'),
   deleteError: $('delete-error'),
+  tplView: $('template-view'),
+  ocView: $('opencode-view'),
+  tabsTpl: $('templates-tab'),
+  tabsOc: $('opencode-tab'),
+  ocStatus: $('oc-status'),
+  ocForm: $('oc-form'),
+  ocDirectory: $('oc-directory'),
+  ocPrompt: $('oc-prompt'),
+  ocModel: $('oc-model'),
+  ocAgent: $('oc-agent'),
+  ocSession: $('oc-session'),
+  ocAuto: $('oc-auto'),
+  ocRunError: $('oc-run-error'),
+  ocList: $('oc-list'),
+  ocListLoading: $('oc-list-loading'),
+  ocListError: $('oc-list-error'),
+  ocEmpty: $('oc-empty'),
+  ocOutput: $('oc-output'),
+  ocOutputTitle: $('oc-output-title'),
+  ocOutputMeta: $('oc-output-meta'),
+  ocOutputPre: $('oc-output-pre'),
+  ocStopBtn: $('oc-stop-btn'),
+  ocRefreshBtn: $('oc-refresh-btn'),
+  ocCloseBtn: $('oc-close-btn'),
 };
 
 function show(el) {
@@ -631,11 +665,307 @@ async function onDeleteSubmit(e) {
   }
 }
 
+/* ---------- Tampilan: Template vs Sesi OpenCode ---------- */
+
+function showView(name) {
+  const isTemplates = name === 'templates';
+
+  els.tplView.hidden = !isTemplates;
+  els.ocView.hidden = isTemplates;
+  els.tabsTpl.classList.toggle('active', isTemplates);
+  els.tabsOc.classList.toggle('active', !isTemplates);
+
+  if (isTemplates) {
+    stopOcPolling();
+    refreshTemplates(null);
+  } else {
+    startOcPolling();
+    loadOcStatus();
+    refreshSessions();
+  }
+}
+
+/* ---------- Sesi OpenCode: status ---------- */
+
+async function loadOcStatus() {
+  try {
+    const data = await api('GET', '/api/opencode/status');
+    oc.status = data;
+    renderOcStatus(data);
+
+    if (!oc.directorySet) {
+      els.ocDirectory.value = data.defaultDirectory;
+      oc.directorySet = true;
+    }
+
+    if (!data.available) {
+      setError(els.ocRunError, 'opencode tidak ditemukan. Pasang opencode (https://opencode.ai) atau atur AINSTRUCT_OPENCODE_BIN, lalu muat ulang halaman.');
+    } else if (!data.windowsSupported) {
+      setError(els.ocRunError, 'Menjalankan sesi opencode dari WebUI belum didukung di Windows. Gunakan terminal di direktori proyek.');
+    } else {
+      setError(els.ocRunError, '');
+    }
+  } catch (err) {
+    els.ocStatus.textContent = 'Status opencode tidak dapat dibaca: ' + err.message;
+  }
+}
+
+function renderOcStatus(data) {
+  if (!data.available) {
+    els.ocStatus.textContent = 'opencode tidak tersedia (bin: ' + data.bin + ').';
+    els.ocStatus.className = 'oc-status is-unavailable';
+    return;
+  }
+
+  els.ocStatus.textContent = 'opencode tersedia' + (data.version ? ' (' + data.version + ')' : '') + ' · bin: ' + data.bin;
+  els.ocStatus.className = 'oc-status is-ok';
+}
+
+/* ---------- Sesi OpenCode: daftar ---------- */
+
+async function refreshSessions() {
+  show(els.ocListLoading);
+  hide(els.ocListError);
+
+  try {
+    const data = await api('GET', '/api/opencode/sessions');
+    oc.sessions = data.sessions;
+
+    const key = oc.sessions.map((s) => s.id + ':' + s.status).join('|');
+
+    if (key !== oc.listKey) {
+      oc.listKey = key;
+      renderSessions(oc.sessions);
+    }
+
+    if (oc.activeId && !oc.sessions.some((s) => s.id === oc.activeId)) {
+      oc.activeId = null;
+      oc.listKey = '';
+      hide(els.ocOutput);
+    }
+  } catch (err) {
+    show(els.ocListError);
+    els.ocListError.textContent = err.message;
+  } finally {
+    hide(els.ocListLoading);
+  }
+}
+
+function renderSessions(sessions) {
+  clearList(els.ocList);
+  els.ocEmpty.hidden = sessions.length > 0;
+
+  for (const session of sessions) {
+    els.ocList.appendChild(sessionItem(session));
+  }
+}
+
+function sessionItem(session) {
+  const li = document.createElement('li');
+  li.className = 'oc-item';
+
+  const head = document.createElement('div');
+  head.className = 'oc-item-head';
+
+  const badge = document.createElement('span');
+  badge.className = 'oc-badge ' + badgeClass(session.status);
+  badge.textContent = session.status;
+
+  const id = document.createElement('span');
+  id.className = 'oc-item-id';
+  id.textContent = session.id;
+
+  head.append(badge, id);
+
+  const dir = document.createElement('p');
+  dir.className = 'oc-item-meta muted';
+  dir.textContent = session.directory;
+
+  const prompt = document.createElement('p');
+  prompt.className = 'oc-item-prompt';
+  prompt.textContent = session.prompt;
+
+  const actions = document.createElement('div');
+  actions.className = 'oc-item-actions';
+
+  const openBtn = makeButton('Buka', 'btn');
+  openBtn.addEventListener('click', () => openOutput(session.id));
+  actions.appendChild(openBtn);
+
+  if (session.status === 'running') {
+    const stopBtn = makeButton('Hentikan', 'btn danger');
+    stopBtn.addEventListener('click', () => stopSession(session.id));
+    actions.appendChild(stopBtn);
+  }
+
+  const deleteBtn = makeButton('Hapus', 'btn danger');
+  deleteBtn.addEventListener('click', () => deleteSession(session.id));
+  actions.appendChild(deleteBtn);
+
+  li.append(head, dir, prompt, actions);
+
+  return li;
+}
+
+function badgeClass(status) {
+  if (status === 'running') return 'is-running';
+  if (status === 'stopped') return 'is-stopped';
+  return 'is-finished';
+}
+
+function makeButton(label, className) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = className;
+  btn.textContent = label;
+
+  return btn;
+}
+
+/* ---------- Sesi OpenCode: jalankan / output / stop / hapus ---------- */
+
+async function onOcSubmit(e) {
+  e.preventDefault();
+  setError(els.ocRunError, '');
+
+  const directory = els.ocDirectory.value.trim();
+  const prompt = els.ocPrompt.value.trim();
+
+  if (directory === '') {
+    setError(els.ocRunError, 'Direktori proyek wajib diisi.');
+    return;
+  }
+
+  if (prompt === '') {
+    setError(els.ocRunError, 'Instruksi (prompt) wajib diisi.');
+    return;
+  }
+
+  try {
+    const session = await api('POST', '/api/opencode/sessions', {
+      directory,
+      prompt,
+      model: els.ocModel.value.trim() === '' ? undefined : els.ocModel.value.trim(),
+      agent: els.ocAgent.value.trim() === '' ? undefined : els.ocAgent.value.trim(),
+      session: els.ocSession.value.trim() === '' ? undefined : els.ocSession.value.trim(),
+      auto: els.ocAuto.checked,
+    });
+
+    els.ocPrompt.value = '';
+    els.ocListError.hidden = true;
+    toast('Sesi dimulai: ' + session.id);
+    oc.listKey = '';
+    await refreshSessions();
+    await openOutput(session.id);
+  } catch (err) {
+    setError(els.ocRunError, err.message);
+  }
+}
+
+async function openOutput(id) {
+  oc.activeId = id;
+  show(els.ocOutput);
+  await refreshOutput();
+}
+
+async function refreshOutput() {
+  if (!oc.activeId) {
+    return;
+  }
+
+  try {
+    const data = await api('GET', '/api/opencode/sessions/' + encode(oc.activeId));
+    const meta = data.meta;
+
+    els.ocOutputTitle.textContent = meta.id;
+    els.ocOutputMeta.textContent = meta.directory
+      + ' · mulai ' + meta.startedAt
+      + ' · status ' + meta.status
+      + (meta.finishedAt ? ' · selesai ' + meta.finishedAt : '');
+    els.ocOutputPre.textContent = data.output.content;
+    els.ocStopBtn.disabled = meta.status !== 'running';
+  } catch (err) {
+    els.ocOutputPre.textContent = 'Gagal memuat output: ' + err.message;
+  }
+}
+
+async function stopSession(id) {
+  try {
+    await api('POST', '/api/opencode/sessions/' + encode(id) + '/stop');
+    toast('Sesi dihentikan: ' + id);
+    oc.listKey = '';
+    await refreshSessions();
+
+    if (oc.activeId === id) {
+      await refreshOutput();
+    }
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+async function deleteSession(id) {
+  if (!window.confirm('Hapus catatan sesi ' + id + ' beserta lognya? Tindakan ini permanen.')) {
+    return;
+  }
+
+  try {
+    await api('DELETE', '/api/opencode/sessions/' + encode(id), { force: true });
+    toast('Sesi dihapus: ' + id);
+
+    if (oc.activeId === id) {
+      oc.activeId = null;
+      hide(els.ocOutput);
+    }
+
+    oc.listKey = '';
+    await refreshSessions();
+  } catch (err) {
+    toast(err.message, true);
+  }
+}
+
+/* ---------- Sesi OpenCode: polling ---------- */
+
+function startOcPolling() {
+  stopOcPolling();
+
+  oc.pollTimer = setInterval(refreshSessions, 3000);
+  oc.outTimer = setInterval(() => {
+    if (!oc.activeId) {
+      return;
+    }
+
+    const active = oc.sessions.find((s) => s.id === oc.activeId);
+
+    if (active && active.status === 'running') {
+      refreshOutput();
+    }
+  }, 2000);
+}
+
+function stopOcPolling() {
+  clearInterval(oc.pollTimer);
+  clearInterval(oc.outTimer);
+  oc.pollTimer = null;
+  oc.outTimer = null;
+}
+
 /* ---------- Init ---------- */
 
 function init() {
-  $('reload-btn').addEventListener('click', () => refreshTemplates(null));
+  $('reload-btn').addEventListener('click', () => {
+    if (!els.tplView.hidden) {
+      refreshTemplates(null);
+    } else {
+      loadOcStatus();
+      refreshSessions();
+    }
+  });
   $('create-btn').addEventListener('click', openCreateDialog);
+
+  els.tabsTpl.addEventListener('click', () => showView('templates'));
+  els.tabsOc.addEventListener('click', () => showView('opencode'));
 
   els.cloneBtn.addEventListener('click', openCloneDialog);
   els.updateBtn.addEventListener('click', openUpdateDialog);
@@ -668,6 +998,18 @@ function init() {
   els.cloneForm.addEventListener('submit', onCloneSubmit);
   els.updateForm.addEventListener('submit', onUpdateSubmit);
   els.deleteForm.addEventListener('submit', onDeleteSubmit);
+
+  els.ocForm.addEventListener('submit', onOcSubmit);
+  els.ocRefreshBtn.addEventListener('click', refreshOutput);
+  els.ocStopBtn.addEventListener('click', () => {
+    if (oc.activeId) {
+      stopSession(oc.activeId);
+    }
+  });
+  els.ocCloseBtn.addEventListener('click', () => {
+    oc.activeId = null;
+    hide(els.ocOutput);
+  });
 
   for (const btn of document.querySelectorAll('[data-close]')) {
     btn.addEventListener('click', () => {

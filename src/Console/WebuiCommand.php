@@ -64,18 +64,38 @@ final class WebuiCommand extends Command
         $this->style()->keyValue('Bind', $host);
         $this->style()->keyValue('Berhenti', 'Ctrl+C');
         $this->style()->blank();
+        $this->style()->bullet('Template: list/create/clone/update/delete + editor file (built-in terproteksi).');
+        $this->style()->bullet('Sesi opencode: jalankan `opencode run` di direktori proyek dan pantau outputnya.');
+        $this->style()->blank();
 
         if (! $noOpen) {
             $this->openBrowser($url);
         }
 
-        $command = 'php -S '.escapeshellarg($this->listenHost($host).':'.$port)
-            .' -t '.escapeshellarg($docRoot)
-            .' '.escapeshellarg($router);
+        $command = $this->withEnvVar(
+            'AINSTRUCT_WEBUI_CWD',
+            getcwd() ?: '.',
+            'php -S '.escapeshellarg($this->listenHost($host).':'.$port)
+                .' -t '.escapeshellarg($docRoot)
+                .' '.escapeshellarg($router),
+        );
 
         passthru($command, $exitCode);
 
         return $exitCode;
+    }
+
+    /**
+     * Sisipkan variabel lingkungan di depan perintah agar server web tahu
+     * direktori kerja asal `ainstruct webui` (default sesi opencode).
+     */
+    private function withEnvVar(string $name, string $value, string $command): string
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            return 'set "'.$name.'='.$value.'" && '.$command;
+        }
+
+        return $name.'='.escapeshellarg($value).' '.$command;
     }
 
     private function validPort(string $port): bool

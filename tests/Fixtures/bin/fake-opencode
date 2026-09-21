@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Fake opencode untuk test WebUI — tidak memanggil model.
+#
+# Perilaku:
+#   --version                         mencetak versi palsu (exit 0)
+#   run <argv...>                     menulis seluruh argv ke $AINSTRUCT_FAKE_LOG
+#                                     (bila diset), tidur $AINSTRUCT_FAKE_SLEEP
+#                                     detik (bila diset; via exec agar PID proses
+#                                     = PID sleep sehingga `kill` langsung
+#                                     menghentikannya), lalu mencetak output
+#                                     tiruan dan keluar 0.
+set -u
+
+if [ "${1:-}" = "--version" ]; then
+  echo "fake opencode v9.9.9"
+  exit 0
+fi
+
+if [ "${1:-}" = "run" ]; then
+  if [ -n "${AINSTRUCT_FAKE_LOG:-}" ]; then
+    printf '%s\n' "$@" > "$AINSTRUCT_FAKE_LOG"
+  fi
+
+  if [ -n "${AINSTRUCT_FAKE_SLEEP:-}" ]; then
+    exec sleep "$AINSTRUCT_FAKE_SLEEP"
+  fi
+
+  echo "FAKE-RUN: menerima instruksi"
+  echo "FAKE-RUN: selesai"
+  exit 0
+fi
+
+echo "unknown command: ${1:-}" >&2
+exit 2

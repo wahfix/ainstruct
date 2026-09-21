@@ -185,6 +185,8 @@ final class HelpCommand extends Command
         $this->style()->bullet('Jalankan server lokal dan antarmuka browser untuk mengelola template milik konsumen.');
         $this->style()->bullet('List/create/clone/update/delete/path plus penjelajah dan editor file template custom.');
         $this->style()->bullet('Template built-in tetap terproteksi: bisa dibaca, tidak bisa dihapus/diubah dari antarmuka.');
+        $this->style()->bullet('Sesi opencode: jalankan `opencode run` di direktori proyek pilihan (default: direktori saat ini),');
+        $this->style()->bullet('pantau output live, hentikan proses, lanjutkan sesi lama via session ID, dan hapus catatan sesi.');
         $this->style()->bullet('Command ini tidak pernah menjalankan distribusi, jadi aman dari direktori mana pun.');
         $this->style()->blank();
         $this->style()->section('Usage');
