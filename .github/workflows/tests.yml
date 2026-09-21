@@ -285,22 +285,37 @@ jobs:
           REPO="$(pwd)"
           TMP="$(mktemp -d)"
           export AINSTRUCT_HOME="$TMP/ahome"
+          mkdir -p "$AINSTRUCT_HOME"
           php -S 127.0.0.1:8799 -t "$REPO/web" "$REPO/web/index.php" >"$TMP/server.log" 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 20); do
-            if curl -fsS http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
+            if curl -fsS --max-time 10 http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
               break
             fi
             sleep 0.5
           done
-          # Aset statis harus MIME benar; regresi router menelan file statis
-          # pernah lolos karena smoke hanya mengecek status HTTP.
-          MIME="$(curl -s -o /dev/null -w '%{content_type}' http://127.0.0.1:8799/assets/app.js)"
-          test "$MIME" = "application/javascript" \
-            || { echo "FAIL: app.js MIME '$MIME'"; exit 1; }
-          curl -fsS -o /dev/null http://127.0.0.1:8799/assets/styles.css
-          curl -fsS -o /dev/null http://127.0.0.1:8799/assets/logo.svg
+          if ! curl -fsS --max-time 10 http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
+            echo "FAIL: server webui tidak siap setelah 10 detik"
+            tail -5 "$TMP/server.log" 2>/dev/null || true
+            exit 1
+          fi
+          # Aset statis harus disajikan sebagai file nyata, bukan shell SPA.
+          # Regresi router pernah mengirim index.html (text/html) untuk aset;
+          # MIME .js berbeda antar versi PHP, jadi yang dicek adalah isi body.
+          for ASSET in assets/app.js assets/styles.css assets/logo.svg; do
+            BODY="$(curl -fsS --max-time 10 "http://127.0.0.1:8799/$ASSET")"
+            test -n "$BODY" || { echo "FAIL: $ASSET kosong"; exit 1; }
+            if printf '%s' "$BODY" | grep -qi '<!doctype html>'; then
+              echo "FAIL: $ASSET disajikan sebagai shell SPA (regresi router)"
+              exit 1
+            fi
+          done
+          printf '%s' "$(curl -fsS --max-time 10 http://127.0.0.1:8799/assets/app.js)" \
+            | grep -q "'use strict'" \
+            || { echo "FAIL: app.js bukan isi JS nyata"; exit 1; }
+          # Kontrol positif: path non-aset memang melayani shell SPA.
+          curl -fsS --max-time 10 http://127.0.0.1:8799/ | grep -q 'WebUI Template'
           curl -fsS -X POST http://127.0.0.1:8799/api/templates \
             -H 'Content-Type: application/json' -d '{"name":"webtpl"}' | grep -q '"ok": true'
           curl -fsS http://127.0.0.1:8799/api/templates/webtpl | grep -q '"origin": "custom"'
