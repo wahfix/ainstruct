@@ -5,9 +5,11 @@ namespace Lace\Ainstruct\Web;
 use Illuminate\Container\Container;
 use Lace\Ainstruct\Exceptions\AinstructException;
 use Lace\Ainstruct\Exceptions\InvalidOperationException;
+use Lace\Ainstruct\Exceptions\SessionNotFoundException;
 use Lace\Ainstruct\Exceptions\TemplateNotFoundException;
 use Lace\Ainstruct\Exceptions\TemplateProtectedException;
 use Lace\Ainstruct\Exceptions\ValidationException;
+use Lace\Ainstruct\Web\Controllers\OpencodeController;
 use Lace\Ainstruct\Web\Controllers\TemplateController;
 
 /**
@@ -30,6 +32,12 @@ final class Kernel
         ['GET', '#^/api/templates/(?P<name>[A-Za-z0-9_-]+)/tree$#', 'tree'],
         ['GET', '#^/api/templates/(?P<name>[A-Za-z0-9_-]+)/file$#', 'file'],
         ['PUT', '#^/api/templates/(?P<name>[A-Za-z0-9_-]+)/file$#', 'file'],
+        ['GET', '#^/api/opencode/status$#', 'opencodeStatus'],
+        ['GET', '#^/api/opencode/sessions$#', 'opencodeList'],
+        ['POST', '#^/api/opencode/sessions$#', 'opencodeStart'],
+        ['GET', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)$#', 'opencodeDetail'],
+        ['POST', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)/stop$#', 'opencodeStop'],
+        ['DELETE', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)$#', 'opencodeDelete'],
     ];
 
     public function __construct(private Container $container) {}
@@ -63,15 +71,26 @@ final class Kernel
         /** @var TemplateController $controller */
         $controller = $this->container->make(TemplateController::class);
 
+        /** @var OpencodeController $opencode */
+        $opencode = $this->container->make(OpencodeController::class);
+
         try {
+            if ($this->isOpencodeAction($action)) {
+                return $this->dispatch($opencode, $action, $request, $matches);
+            }
+
             return $this->dispatch($controller, $action, $request, $matches);
         } catch (\Throwable $e) {
             return $this->error($e);
         }
     }
 
-    private function dispatch(TemplateController $controller, string $action, Request $request, array $matches): Response
+    private function dispatch(TemplateController|OpencodeController $controller, string $action, Request $request, array $matches): Response
     {
+        if ($controller instanceof OpencodeController) {
+            return $this->dispatchOpencode($controller, $action, $request, $matches);
+        }
+
         return match ($action) {
             'templates' => $controller->templates($request),
             'create' => $controller->create($request),
@@ -83,6 +102,24 @@ final class Kernel
             'file' => $controller->file($request, $matches),
             default => Response::json(500, ['ok' => false, 'error' => 'Aksi tidak dikenal.']),
         };
+    }
+
+    private function dispatchOpencode(OpencodeController $controller, string $action, Request $request, array $matches): Response
+    {
+        return match ($action) {
+            'opencodeStatus' => $controller->status($request),
+            'opencodeList' => $controller->index($request),
+            'opencodeStart' => $controller->start($request),
+            'opencodeDetail' => $controller->detail($request, $matches),
+            'opencodeStop' => $controller->stop($request, $matches),
+            'opencodeDelete' => $controller->delete($request, $matches),
+            default => Response::json(500, ['ok' => false, 'error' => 'Aksi tidak dikenal.']),
+        };
+    }
+
+    private function isOpencodeAction(string $action): bool
+    {
+        return str_starts_with($action, 'opencode');
     }
 
     /**
@@ -153,6 +190,7 @@ final class Kernel
         $status = match (true) {
             $e instanceof ValidationException => 422,
             $e instanceof TemplateNotFoundException => 404,
+            $e instanceof SessionNotFoundException => 404,
             $e instanceof TemplateProtectedException => 403,
             $e instanceof InvalidOperationException => 409,
             $e instanceof AinstructException => 500,

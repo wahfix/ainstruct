@@ -11,6 +11,7 @@ use Lace\Ainstruct\Repositories\InstructionFileRepository;
 use Lace\Ainstruct\Repositories\MasterRepository;
 use Lace\Ainstruct\Repositories\TemplateRepository;
 use Lace\Ainstruct\Services\Detection\StackDetectionService;
+use Lace\Ainstruct\Services\Opencode\OpencodeService;
 use Lace\Ainstruct\Support\Filesystem;
 use Lace\Ainstruct\Support\Paths;
 
@@ -31,5 +32,6 @@ final class AppServiceProvider
         $this->container->singleton(MasterRepositoryContract::class, MasterRepository::class);
         $this->container->singleton(InstructionFileRepositoryContract::class, InstructionFileRepository::class);
         $this->container->singleton(StackDetectorContract::class, StackDetectionService::class);
+        $this->container->singleton(OpencodeService::class);
     }
 }

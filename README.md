@@ -258,6 +258,11 @@ template konsumen: daftar, buat (scaffold atau impor git), clone, update, hapus,
 plus penjelajah dan editor file. Template built-in tetap terproteksi: bisa dibaca,
 tidak bisa dihapus, diupdate, atau ditulis dari antarmuka.
 
+WebUI juga bisa **menjalankan sesi opencode**: isi direktori proyek dan instruksi
+(prompt), lalu `opencode run` di-spawn di direktori tersebut, output dipantau live,
+proses bisa dihentikan, sesi lama bisa dilanjutkan via session ID, dan catatan sesi
+bisa dihapus.
+
 ```bash
 ainstruct webui                  # server 127.0.0.1:8787 + buka browser
 ainstruct webui --no-open        # tanpa membuka browser
@@ -268,9 +273,13 @@ ainstruct webui --port 9000      # port tertentu (default 8787; port bebas berik
   API dan keamanan ada di `web/README.md`.
 - Command ini tidak pernah menjalankan distribusi, jadi aman dijalankan dari
   direktori mana pun. Bind default `127.0.0.1`; jangan expose ke jaringan publik.
-- Operasi destruktif (update/delete) memakai dialog konfirmasi; API-nya menolak
-  tanpa `force: true`. Path file dibatasi di dalam direktori template; traversal,
-  symlink keluar, biner, dan file di atas 2 MB ditolak.
+- Operasi destruktif (update/delete template, hapus sesi) memakai dialog
+  konfirmasi; API-nya menolak tanpa `force: true`. Path file dibatasi di dalam
+  direktori template; traversal, symlink keluar, biner, dan file di atas 2 MB
+  ditolak.
+- Sesi opencode hanya menjalankan `opencode run` dengan argumen ter-escape — tidak
+  ada lintasan perintah shell dari input bebas; butuh binary `opencode` (atau
+  `AINSTRUCT_OPENCODE_BIN`). Didukung di POSIX; Windows belum bisa memulai sesi.
 
 ## Operator Memory — Mesin Adaptif di Setiap Salinan
 

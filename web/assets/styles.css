@@ -551,6 +551,216 @@ textarea {
   color: var(--danger);
 }
 
+/* Tab navigasi */
+
+.tab-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Panel Sesi OpenCode */
+
+.oc-panel {
+  padding: 20px;
+  max-width: 1100px;
+}
+
+.oc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.oc-status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.oc-status.is-ok {
+  color: var(--success);
+}
+
+.oc-status.is-unavailable {
+  color: var(--danger);
+}
+
+.oc-form {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  background: var(--panel);
+}
+
+.oc-form textarea {
+  width: 100%;
+  min-height: 84px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+  tab-size: 4;
+}
+
+.oc-form textarea:focus {
+  border-color: var(--accent);
+}
+
+.oc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.oc-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.oc-form-actions .dialog-error {
+  margin-right: auto;
+}
+
+.oc-sessions {
+  margin-top: 20px;
+}
+
+.oc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.oc-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.oc-item:last-child {
+  border-bottom: 0;
+}
+
+.oc-item-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.oc-item-id {
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.oc-item-meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.oc-item-prompt {
+  margin: 6px 0 0;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.oc-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.oc-badge {
+  padding: 2px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.oc-badge.is-running {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.oc-badge.is-finished {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.oc-badge.is-stopped {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.oc-output {
+  margin-top: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.oc-output-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.oc-output-title {
+  margin: 0;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+.oc-output-info .muted {
+  font-size: 12px;
+  margin: 4px 0 0;
+  word-break: break-all;
+}
+
+.oc-output-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.oc-output-pre {
+  margin: 0;
+  padding: 14px 16px;
+  min-height: 220px;
+  max-height: 60vh;
+  overflow: auto;
+  background: var(--bg);
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 /* Mobile: kolom menumpuk, daftar di atas panel (R-03) */
 
 @media (max-width: 920px) {
@@ -571,6 +781,15 @@ textarea {
 
   .editor-area {
     min-height: 300px;
+  }
+
+  .oc-panel {
+    padding: 16px;
+  }
+
+  .oc-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 
