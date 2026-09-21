@@ -282,9 +282,9 @@ jobs:
       - name: Smoke test webui (php -S, API, static MIME)
         run: |
           set -euo pipefail
-          set -x
           REPO="$(pwd)"
           TMP="$(mktemp -d)"
+          BODY="$TMP/body"
           export AINSTRUCT_HOME="$TMP/ahome"
           mkdir -p "$AINSTRUCT_HOME"
           php -S 127.0.0.1:8799 -t "$REPO/web" "$REPO/web/index.php" >"$TMP/server.log" 2>&1 &
@@ -296,39 +296,39 @@ jobs:
             fi
             sleep 0.5
           done
-          echo "=== server.log ==="
-          cat "$TMP/server.log" 2>/dev/null || true
-          echo "=== app.js headers ==="
-          curl -sI --max-time 10 http://127.0.0.1:8799/assets/app.js || true
-          echo "=== readiness check ==="
           if ! curl -fsS --max-time 10 http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
             echo "FAIL: server webui tidak siap setelah 10 detik"
             tail -5 "$TMP/server.log" 2>/dev/null || true
             exit 1
           fi
+          # Body selalu ditulis ke file lalu di-grep. Jangan pernah pipe curl
+          # ke grep -q: grep keluar saat match pertama, curl dapat SIGPIPE
+          # (exit 23) dan pipefail mematikan job secara diam-diam.
           # Aset statis harus disajikan sebagai file nyata, bukan shell SPA.
           # Regresi router pernah mengirim index.html (text/html) untuk aset;
           # MIME .js berbeda antar versi PHP, jadi yang dicek adalah isi body.
           for ASSET in assets/app.js assets/styles.css assets/logo.svg; do
-            BODY="$(curl -fsS --max-time 10 "http://127.0.0.1:8799/$ASSET")"
-            test -n "$BODY" || { echo "FAIL: $ASSET kosong"; exit 1; }
-            if printf '%s' "$BODY" | grep -qi '<!doctype html>'; then
-              echo "FAIL: $ASSET disajikan sebagai shell SPA (regresi router)"
-              exit 1
-            fi
+            curl -fsS --max-time 10 -o "$BODY" "http://127.0.0.1:8799/$ASSET"
+            test -s "$BODY" || { echo "FAIL: $ASSET kosong"; exit 1; }
+            grep -qi '<!doctype html>' "$BODY" && { echo "FAIL: $ASSET disajikan sebagai shell SPA (regresi router)"; exit 1; }
           done
-          printf '%s' "$(curl -fsS --max-time 10 http://127.0.0.1:8799/assets/app.js)" \
-            | grep -q "'use strict'" \
-            || { echo "FAIL: app.js bukan isi JS nyata"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" http://127.0.0.1:8799/assets/app.js
+          grep -q "'use strict'" "$BODY" || { echo "FAIL: app.js bukan isi JS nyata"; exit 1; }
           # Kontrol positif: path non-aset memang melayani shell SPA.
-          curl -fsS --max-time 10 http://127.0.0.1:8799/ | grep -q 'WebUI Template'
-          curl -fsS -X POST http://127.0.0.1:8799/api/templates \
-            -H 'Content-Type: application/json' -d '{"name":"webtpl"}' | grep -q '"ok": true'
-          curl -fsS http://127.0.0.1:8799/api/templates/webtpl | grep -q '"origin": "custom"'
-          curl -fsS "http://127.0.0.1:8799/api/templates/webtpl/tree?path=" | grep -q '"entries"'
-          curl -fsS "http://127.0.0.1:8799/api/templates/webtpl/file?path=ai-instructions.md" | grep -q '"content"'
-          CODE="$(curl -s -o /dev/null -w '%{http_code}' -X DELETE http://127.0.0.1:8799/api/templates/webtpl)"
+          curl -fsS --max-time 10 -o "$BODY" http://127.0.0.1:8799/
+          grep -qi '<!doctype html>' "$BODY" || { echo "FAIL: shell SPA tidak dilayani untuk /"; exit 1; }
+          grep -q 'WebUI Template' "$BODY" || { echo "FAIL: shell SPA tidak memuat judul WebUI"; exit 1; }
+          curl -fsS --max-time 10 -X POST -o "$BODY" http://127.0.0.1:8799/api/templates \
+            -H 'Content-Type: application/json' -d '{"name":"webtpl"}'
+          grep -q '"ok":true' "$BODY" || { echo "FAIL: create template gagal"; cat "$BODY"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" http://127.0.0.1:8799/api/templates/webtpl
+          grep -q '"origin":"custom"' "$BODY" || { echo "FAIL: template webtpl bukan custom"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" "http://127.0.0.1:8799/api/templates/webtpl/tree?path="
+          grep -q '"entries"' "$BODY" || { echo "FAIL: tree tidak memuat entries"; exit 1; }
+          curl -fsS --max-time 10 -o "$BODY" "http://127.0.0.1:8799/api/templates/webtpl/file?path=ai-instructions.md"
+          grep -q '"content"' "$BODY" || { echo "FAIL: file tidak memuat content"; exit 1; }
+          CODE="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X DELETE http://127.0.0.1:8799/api/templates/webtpl)"
           test "$CODE" = "409" || { echo "FAIL: delete tanpa force harus 409, dapat $CODE"; exit 1; }
-          CODE="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8799/api/templates/webtpl/file?path=..%2F..%2Fetc%2Fpasswd")"
+          CODE="$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "http://127.0.0.1:8799/api/templates/webtpl/file?path=..%2F..%2Fetc%2Fpasswd")"
           test "$CODE" = "422" || { echo "FAIL: traversal harus 422, dapat $CODE"; exit 1; }
           echo "webui smoke: PASS"
