@@ -251,3 +251,63 @@ jobs:
             || { echo "FAIL: status tidak menyebut belum didistribusikan"; exit 1; }
 
           echo "smoke test: PASS"
+
+  phpunit:
+    runs-on: ubuntu-latest
+    name: PHPUnit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+        name: composer install
+      - run: vendor/bin/phpunit
+        name: phpunit
+
+  webui-smoke:
+    runs-on: ubuntu-latest
+    name: WebUI smoke test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+        name: composer install
+      - name: Smoke test webui (php -S, API, static MIME)
+        run: |
+          set -euo pipefail
+          REPO="$(pwd)"
+          TMP="$(mktemp -d)"
+          export AINSTRUCT_HOME="$TMP/ahome"
+          php -S 127.0.0.1:8799 -t "$REPO/web" "$REPO/web/index.php" >"$TMP/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8799/api/templates >/dev/null 2>&1; then
+              break
+            fi
+            sleep 0.5
+          done
+          # Aset statis harus MIME benar; regresi router menelan file statis
+          # pernah lolos karena smoke hanya mengecek status HTTP.
+          MIME="$(curl -s -o /dev/null -w '%{content_type}' http://127.0.0.1:8799/assets/app.js)"
+          test "$MIME" = "application/javascript" \
+            || { echo "FAIL: app.js MIME '$MIME'"; exit 1; }
+          curl -fsS -o /dev/null http://127.0.0.1:8799/assets/styles.css
+          curl -fsS -o /dev/null http://127.0.0.1:8799/assets/logo.svg
+          curl -fsS -X POST http://127.0.0.1:8799/api/templates \
+            -H 'Content-Type: application/json' -d '{"name":"webtpl"}' | grep -q '"ok": true'
+          curl -fsS http://127.0.0.1:8799/api/templates/webtpl | grep -q '"origin": "custom"'
+          curl -fsS "http://127.0.0.1:8799/api/templates/webtpl/tree?path=" | grep -q '"entries"'
+          curl -fsS "http://127.0.0.1:8799/api/templates/webtpl/file?path=ai-instructions.md" | grep -q '"content"'
+          CODE="$(curl -s -o /dev/null -w '%{http_code}' -X DELETE http://127.0.0.1:8799/api/templates/webtpl)"
+          test "$CODE" = "409" || { echo "FAIL: delete tanpa force harus 409, dapat $CODE"; exit 1; }
+          CODE="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8799/api/templates/webtpl/file?path=..%2F..%2Fetc%2Fpasswd")"
+          test "$CODE" = "422" || { echo "FAIL: traversal harus 422, dapat $CODE"; exit 1; }
+          echo "webui smoke: PASS"

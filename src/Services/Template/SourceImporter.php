@@ -12,7 +12,7 @@ use Lace\Ainstruct\Exceptions\InvalidOperationException;
  */
 final class SourceImporter
 {
-    private const SOURCE_FILE = 'ainstruct.source';
+    public const SOURCE_FILE = 'ainstruct.source';
 
     public function __construct(private InstructionFileRepositoryContract $files) {}
 
@@ -48,6 +48,27 @@ final class SourceImporter
         return false;
     }
 
+    /**
+     * Normalisasi jalur sumber: perluas tilde (~ dan ~/...) ke direktori home.
+     * `git clone` dipanggil lewat escapeshellarg sehingga tilde tidak pernah
+     * diekspansi shell; ekspansi dilakukan di sini agar sumber `~/repo` bisa
+     * diimpor dan tersimpan sebagai jalur absolut di ainstruct.source.
+     */
+    public function expandSource(string $source): string
+    {
+        if ($source !== '~' && ! str_starts_with($source, '~/')) {
+            return $source;
+        }
+
+        $home = getenv('HOME') ?: getenv('USERPROFILE');
+
+        if ($home === false || $home === '') {
+            return $source;
+        }
+
+        return $source === '~' ? $home : $home.substr($source, 1);
+    }
+
     public function sourceFileFor(string $templateDir): string
     {
         return $templateDir.DIRECTORY_SEPARATOR.self::SOURCE_FILE;
@@ -59,6 +80,7 @@ final class SourceImporter
      */
     public function import(string $source, string $targetDir, ?string $ref = null): void
     {
+        $source = $this->expandSource($source);
         $this->assertGitAvailable();
 
         $tmp = sys_get_temp_dir().'/ainstruct-import-'.bin2hex(random_bytes(6));
