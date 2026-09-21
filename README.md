@@ -228,20 +228,49 @@ bila namanya sama (shadow — bisa dibatalkan dengan menghapus template custom).
 ```bash
 ainstruct template list                          # daftar built-in (proteksi) + custom
 ainstruct template create myfw                   # buat template/scaffold sendiri
+ainstruct template create myfw --from https://github.com/user/myfw   # impor template dari git
 ainstruct template clone mylaravel laravel       # customisasi built-in → milik Anda
 ainstruct template update mylaravel --from laravel   # tarik ulang dari built-in
+ainstruct template update myfw                   # tanpa --from: tarik dari sumber tersimpan
 ainstruct template delete myfw --force           # hapus template custom (built-in DITOLAK)
 ainstruct template path mylaravel                # lokasi direktori (untuk diedit)
 ```
 
 - `create` membuat scaffold kosong (`ai-instructions.md` konstitusi + modul) yang
-  terbuka diedit. `clone` menyalin template (built-in atau custom) sebagai milik Anda.
-  `update` menimpa salinan Anda dari sumber (default: built-in senama; `--from <sumber>`
-  untuk sumber lain). `delete` menghapus template custom; built-in selalu DITOLAK dengan
-  pesan arahkan ke clone.
+  terbuka diedit; dengan `--from <sumber>` ia mengimpor template dari **sumber git**
+  (URL `https`/`ssh` atau jalur repo git lokal) — berguna untuk berbagi template
+  antar proyek/mesin tanpa menunggu repo ini. `clone` menyalin template
+  (built-in atau custom) sebagai milik Anda. `update` menimpa salinan Anda dari
+  sumber (`--from <sumber>` untuk sumber lain; tanpa `--from`, template yang pernah
+  diimpor ditarik ulang dari **sumber tersimpan**). `delete` menghapus template
+  custom; built-in selalu DITOLAK dengan pesan arahkan ke clone.
+- Sumber git dan ref (`--ref <branch|tag>`) dicatat ke file `ainstruct.source` di
+  dalam folder template — `update` tanpa `--from` membaca file ini. Impor butuh
+  perintah `git`; hasil impor adalah salinan tanpa `.git/` (bukan repo kerja).
 - Operasi destruktif (`delete`, `update`) butuh konfirmasi `[y/N]`; di lingkungan
   non-interaktif/CI wajib `--force`.
 - Setelah template custom tersedia, distribusikan seperti biasa: `ainstruct myfw`.
+
+## WebUI: Kelola Template di Browser
+
+`ainstruct webui` menjalankan server lokal dan antarmuka browser untuk mengelola
+template konsumen: daftar, buat (scaffold atau impor git), clone, update, hapus,
+plus penjelajah dan editor file. Template built-in tetap terproteksi: bisa dibaca,
+tidak bisa dihapus, diupdate, atau ditulis dari antarmuka.
+
+```bash
+ainstruct webui                  # server 127.0.0.1:8787 + buka browser
+ainstruct webui --no-open        # tanpa membuka browser
+ainstruct webui --port 9000      # port tertentu (default 8787; port bebas berikutnya bila sibuk)
+```
+
+- Server memakai PHP bawaan (`php -S`) tanpa dependency runtime tambahan; detail
+  API dan keamanan ada di `web/README.md`.
+- Command ini tidak pernah menjalankan distribusi, jadi aman dijalankan dari
+  direktori mana pun. Bind default `127.0.0.1`; jangan expose ke jaringan publik.
+- Operasi destruktif (update/delete) memakai dialog konfirmasi; API-nya menolak
+  tanpa `force: true`. Path file dibatasi di dalam direktori template; traversal,
+  symlink keluar, biner, dan file di atas 2 MB ditolak.
 
 ## Operator Memory — Mesin Adaptif di Setiap Salinan
 

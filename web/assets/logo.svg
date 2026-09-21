@@ -1,0 +1,38 @@
+<svg width="256" height="312" viewBox="0 0 256 312" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AI-INSTRUCTIONS — Repository Instruction Architecture">
+  <defs>
+    <linearGradient id="grad" x1="36" y1="64" x2="220" y2="196" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <radialGradient id="tile" cx="0.5" cy="0.45" r="0.62">
+      <stop stop-color="#141c31"/>
+      <stop offset="1" stop-color="#0b1220"/>
+    </radialGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2.5" cy="2.5" r="1.2" fill="#1b2236"/>
+    </pattern>
+  </defs>
+
+  <rect x="16" y="16" width="224" height="224" rx="48" fill="url(#tile)" stroke="#232d45" stroke-width="1.5"/>
+  <rect x="16" y="16" width="224" height="224" rx="48" fill="url(#grid)" opacity="0.55"/>
+  <rect x="16" y="16" width="224" height="224" rx="48" stroke="url(#grad)" stroke-opacity="0.28" stroke-width="1.5"/>
+
+  <path d="M128 64 L36 196" stroke="#22d3ee" stroke-width="22" stroke-linecap="round"/>
+  <path d="M128 64 L220 196" stroke="#a855f7" stroke-width="22" stroke-linecap="round"/>
+
+  <path d="M74 132 L182 132" stroke="url(#grad)" stroke-width="16" stroke-linecap="round"/>
+
+  <circle cx="128" cy="48" r="10" stroke="#22d3ee" stroke-width="3" fill="#0b1220"/>
+  <circle cx="128" cy="48" r="3" fill="#a855f7"/>
+
+  <circle cx="74" cy="214" r="2.2" fill="#6366f1"/>
+  <circle cx="182" cy="214" r="2.2" fill="#6366f1"/>
+
+  <text x="128" y="290" text-anchor="middle" font-family="Inter, -apple-system, 'Segoe UI', system-ui, sans-serif" font-size="22" font-weight="700" letter-spacing="1.5" fill="#e2e8f0">
+    AI·INSTRUCTIONS
+  </text>
+  <text x="128" y="308" text-anchor="middle" font-family="Inter, -apple-system, 'Segoe UI', system-ui, sans-serif" font-size="10" font-weight="600" letter-spacing="3" fill="#64748b">
+    INSTRUCTION ARCHITECTURE
+  </text>
+</svg>

@@ -42,7 +42,7 @@ jobs:
         name: composer install
       - run: composer validate
         name: composer validate
-      - run: php -l bin/ainstruct && find src tests -name '*.php' -not -path '*/Fixtures/*' -exec php -l {} \;
+      - run: php -l bin/ainstruct && find src tests web -name '*.php' -not -path '*/Fixtures/*' -exec php -l {} \;
         name: php -l
       - run: vendor/bin/pint --test
         name: pint --test

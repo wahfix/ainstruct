@@ -116,6 +116,50 @@ jobs:
           ( cd "$TMP" && $BIN template delete mylaravel --force >/dev/null )
           test -e "$AINSTRUCT_HOME/templates/mylaravel" && { echo "FAIL: custom tidak terhapus"; exit 1; }
 
+          # --- impor template dari sumber git (hermetik: repo git lokal) ---
+          export AINSTRUCT_HOME="$TMP/ahome-import"
+          GITSRC="$TMP/remote-template"
+          mkdir -p "$GITSRC/ai-instructions"
+          printf '# AI INSTRUCTION SYSTEM — CONSTITUTION (remote)\n' > "$GITSRC/ai-instructions.md"
+          printf '# modul\n' > "$GITSRC/ai-instructions/01-governance.md"
+          git -C "$GITSRC" init -q
+          git -C "$GITSRC" config user.name 'CI'
+          git -C "$GITSRC" config user.email 'ci@test.local'
+          git -C "$GITSRC" add -A
+          git -C "$GITSRC" commit -qm init
+          # create --from: impor dari sumber git + metadata ainstruct.source
+          ( cd "$TMP" && $BIN template create remote1 --from "$GITSRC" >/dev/null ) \
+            || { echo "FAIL: create --from tidak mengimpor"; exit 1; }
+          test -f "$AINSTRUCT_HOME/templates/remote1/ai-instructions.md" \
+            || { echo "FAIL: hasil impor tidak punya konstitusi"; exit 1; }
+          test -f "$AINSTRUCT_HOME/templates/remote1/ainstruct.source" \
+            || { echo "FAIL: ainstruct.source tidak ditulis"; exit 1; }
+          grep -q 'source=' "$AINSTRUCT_HOME/templates/remote1/ainstruct.source" \
+            || { echo "FAIL: ainstruct.source tidak memuat sumber"; exit 1; }
+          # .git/ bawaan clone tidak boleh ikut (template = salinan, bukan repo kerja)
+          test ! -e "$AINSTRUCT_HOME/templates/remote1/.git" \
+            || { echo "FAIL: .git bocor ke template impor"; exit 1; }
+          # update tanpa --from: menarik ulang dari sumber tersimpan
+          printf '# AI v2\n' >> "$GITSRC/ai-instructions.md"
+          git -C "$GITSRC" add -A && git -C "$GITSRC" commit -qm v2
+          ( cd "$TMP" && $BIN template update remote1 --force >/dev/null ) \
+            || { echo "FAIL: update tanpa --from gagal"; exit 1; }
+          grep -q 'AI v2' "$AINSTRUCT_HOME/templates/remote1/ai-instructions.md" \
+            || { echo "FAIL: update tidak menarik sumber tersimpan"; exit 1; }
+          # sumber tanpa ai-instructions.md → ditolak
+          GITBAD="$TMP/remote-bad"
+          mkdir -p "$GITBAD"
+          printf 'x\n' > "$GITBAD/README.txt"
+          git -C "$GITBAD" init -q
+          git -C "$GITBAD" config user.name 'CI'
+          git -C "$GITBAD" config user.email 'ci@test.local'
+          git -C "$GITBAD" add -A
+          git -C "$GITBAD" commit -qm init
+          ( cd "$TMP" && $BIN template create badoop --from "$GITBAD" >/dev/null 2>&1 ) \
+            && { echo "FAIL: impor tanpa konstitusi harus gagal"; exit 1; }
+          test ! -e "$AINSTRUCT_HOME/templates/badoop" \
+            || { echo "FAIL: template batal tapi folder tersisa"; exit 1; }
+
           # adapter: bin/ainstruct via symlink vendor/bin (composer style)
           # Root proyek (src+templates+vendor) + paket lace/ainstruct (bin entry).
           # Entry me-resolve autoload lewat kandidat dependency (../../../autoload.php).

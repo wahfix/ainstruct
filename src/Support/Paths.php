@@ -27,6 +27,11 @@ final class Paths
         return $this->targetDir;
     }
 
+    public function packageRoot(): string
+    {
+        return $this->packageRoot;
+    }
+
     public function builtinTemplatesDir(): string
     {
         return $this->packageRoot.DIRECTORY_SEPARATOR.'templates';

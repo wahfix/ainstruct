@@ -25,6 +25,7 @@ final class HelpCommand extends Command
             'reset' => $this->resetDetail(),
             'wipe' => $this->wipeDetail(),
             'template' => $this->templateDetail(),
+            'webui' => $this->webuiDetail(),
             default => $this->unknown($topic),
         };
     }
@@ -170,6 +171,33 @@ final class HelpCommand extends Command
         $this->style()->section('Contoh');
         $this->style()->bullet($this->style()->cyan('ainstruct template clone mylaravel laravel'));
         $this->style()->bullet($this->style()->cyan('ainstruct template create blank --force'));
+        $this->style()->bullet($this->style()->cyan('ainstruct template create myfw --from https://github.com/user/myfw'));
+        $this->style()->bullet($this->style()->cyan('ainstruct template update myfw'));
+        $this->style()->blank();
+
+        return 0;
+    }
+
+    private function webuiDetail(): int
+    {
+        $this->header('WebUI');
+        $this->style()->section('Fungsi');
+        $this->style()->bullet('Jalankan server lokal dan antarmuka browser untuk mengelola template milik konsumen.');
+        $this->style()->bullet('List/create/clone/update/delete/path plus penjelajah dan editor file template custom.');
+        $this->style()->bullet('Template built-in tetap terproteksi: bisa dibaca, tidak bisa dihapus/diubah dari antarmuka.');
+        $this->style()->bullet('Command ini tidak pernah menjalankan distribusi, jadi aman dari direktori mana pun.');
+        $this->style()->blank();
+        $this->style()->section('Usage');
+        $this->style()->bullet($this->style()->cyan('ainstruct webui [--host <ip>] [--port <port>] [--no-open]'));
+        $this->style()->blank();
+        $this->style()->section('Opsi');
+        $this->pairLine('--host <ip>', 'Alamat bind (default 127.0.0.1; jangan expose ke jaringan publik).');
+        $this->pairLine('--port <port>', 'Port (default 8787; saat default sibuk, port bebas berikutnya dipakai).');
+        $this->pairLine('--no-open', 'Jangan membuka browser otomatis.');
+        $this->style()->blank();
+        $this->style()->section('Contoh');
+        $this->style()->bullet($this->style()->cyan('ainstruct webui'));
+        $this->style()->bullet($this->style()->cyan('ainstruct webui --no-open --port 9000'));
         $this->style()->blank();
 
         return 0;
@@ -204,6 +232,7 @@ final class HelpCommand extends Command
             ['name' => 'reset <framework>', 'description' => 'Hapus master lalu distribusikan ulang dari template.'],
             ['name' => 'wipe', 'description' => 'Hapus seluruh artefak hasil distribusi (konfirmasi dulu).'],
             ['name' => 'template', 'description' => 'Kelola template: list/create/clone/update/delete/path.'],
+            ['name' => 'webui', 'description' => 'Kelola template di browser (server lokal + antarmuka web).'],
             ['name' => 'help', 'description' => 'Tampilkan bantuan; gunakan `help <command>` untuk detail.'],
         ];
     }
@@ -215,9 +244,9 @@ final class HelpCommand extends Command
     {
         return [
             ['name' => 'list', 'description' => 'Lihat semua template (built-in + custom).'],
-            ['name' => 'create <nama> [--force]', 'description' => 'Buat template kosong baru.'],
+            ['name' => 'create <nama> [--from <sumber>] [--ref <ref>] [--force]', 'description' => 'Buat scaffold kosong atau impor template dari git (URL/jalur repo).'],
             ['name' => 'clone <nama> <sumber> [--force]', 'description' => 'Salin template sumber (built-in/custom).'],
-            ['name' => 'update <nama> [--from <sumber>] [--force]', 'description' => 'Timpa custom dari sumber.'],
+            ['name' => 'update <nama> [--from <sumber>] [--ref <ref>] [--force]', 'description' => 'Timpa custom dari sumber; tanpa --from menarik sumber tersimpan.'],
             ['name' => 'delete <nama> [--force]', 'description' => 'Hapus template custom (built-in terproteksi).'],
             ['name' => 'path <nama>', 'description' => 'Tampilkan path template (custom dulu, baru built-in).'],
         ];
