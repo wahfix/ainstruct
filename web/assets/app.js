@@ -22,7 +22,7 @@ const oc = {
   listKey: '',
   activeId: null,
   pollTimer: null,
-  outTimer: null,
+  eventSource: null,
   directorySet: false,
 };
 
@@ -865,7 +865,7 @@ async function onOcSubmit(e) {
 async function openOutput(id) {
   oc.activeId = id;
   show(els.ocOutput);
-  await refreshOutput();
+  startOcStream(id);
 }
 
 async function refreshOutput() {
@@ -893,12 +893,15 @@ async function stopSession(id) {
   try {
     await api('POST', '/api/opencode/sessions/' + encode(id) + '/stop');
     toast('Sesi dihentikan: ' + id);
+
+    // SSE akan menerima event 'done' dan me-refresh otomatis.
+    // Tutup koneksi sekarang agar tidak menunggu loop berikutnya.
+    if (oc.activeId === id) {
+      stopOcStream();
+    }
+
     oc.listKey = '';
     await refreshSessions();
-
-    if (oc.activeId === id) {
-      await refreshOutput();
-    }
   } catch (err) {
     toast(err.message, true);
   }
@@ -931,24 +934,57 @@ function startOcPolling() {
   stopOcPolling();
 
   oc.pollTimer = setInterval(refreshSessions, 3000);
-  oc.outTimer = setInterval(() => {
-    if (!oc.activeId) {
-      return;
-    }
-
-    const active = oc.sessions.find((s) => s.id === oc.activeId);
-
-    if (active && active.status === 'running') {
-      refreshOutput();
-    }
-  }, 2000);
 }
 
 function stopOcPolling() {
   clearInterval(oc.pollTimer);
-  clearInterval(oc.outTimer);
   oc.pollTimer = null;
-  oc.outTimer = null;
+
+  stopOcStream();
+}
+
+/* ---------- Sesi OpenCode: SSE streaming ---------- */
+
+function startOcStream(id) {
+  stopOcStream();
+
+  try {
+    const es = new EventSource('/api/opencode/sessions/' + encode(id) + '/stream');
+    oc.eventSource = es;
+
+    es.addEventListener('output', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        els.ocOutputPre.textContent += data.content;
+        els.ocOutputPre.scrollTop = els.ocOutputPre.scrollHeight;
+      } catch (_) { /* ignore malformed event */ }
+    });
+
+    es.addEventListener('done', (e) => {
+      stopOcStream();
+      // Muat ulang meta lengkap untuk status & waktu selesai.
+      refreshOutput();
+      refreshSessions();
+    });
+
+    es.addEventListener('timeout', () => {
+      stopOcStream();
+      refreshOutput();
+    });
+
+    es.addEventListener('error', () => {
+      stopOcStream();
+    });
+  } catch (_) {
+    // EventSource tidak didukung — fallback diam (tombol refresh manual tetap ada).
+  }
+}
+
+function stopOcStream() {
+  if (oc.eventSource) {
+    oc.eventSource.close();
+    oc.eventSource = null;
+  }
 }
 
 /* ---------- Init ---------- */
@@ -1008,6 +1044,7 @@ function init() {
   });
   els.ocCloseBtn.addEventListener('click', () => {
     oc.activeId = null;
+    stopOcStream();
     hide(els.ocOutput);
   });
 

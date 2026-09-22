@@ -10,7 +10,7 @@ use Lace\Ainstruct\Web\Response;
 /**
  * Controller REST sesi opencode WebUI. Semua eksekusi lewat OpencodeService:
  * hanya `opencode run` dengan argumen ter-escape, proses terdetach, dan
- * status dibaca via polling (server php -S single-thread).
+ * status dibaca via streaming SSE (atau fallback polling via detail endpoint).
  */
 final class OpencodeController
 {
@@ -54,6 +54,22 @@ final class OpencodeController
         $this->opencode->stop($id);
 
         return Response::json(200, ['ok' => true, 'data' => ['id' => $id, 'status' => 'stopped']]);
+    }
+
+    public function stream(Request $request, array $matches): Response
+    {
+        $id = $matches['session'];
+
+        // Validasi sesi ada sebelum memulai streaming (404 jika tidak ada).
+        $this->opencode->session($id);
+
+        return Response::stream(function () use ($id): void {
+            $this->opencode->streamOutput($id, function (string $event, array $data): void {
+                echo "event: {$event}\n";
+                echo 'data: '.json_encode($data, JSON_UNESCAPED_UNICODE)."\n\n";
+                flush();
+            });
+        });
     }
 
     public function delete(Request $request, array $matches): Response

@@ -36,6 +36,7 @@ final class Kernel
         ['GET', '#^/api/opencode/sessions$#', 'opencodeList'],
         ['POST', '#^/api/opencode/sessions$#', 'opencodeStart'],
         ['GET', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)$#', 'opencodeDetail'],
+        ['GET', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)/stream$#', 'opencodeStream'],
         ['POST', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)/stop$#', 'opencodeStop'],
         ['DELETE', '#^/api/opencode/sessions/(?P<session>[A-Za-z0-9_-]+)$#', 'opencodeDelete'],
     ];
@@ -111,6 +112,7 @@ final class Kernel
             'opencodeList' => $controller->index($request),
             'opencodeStart' => $controller->start($request),
             'opencodeDetail' => $controller->detail($request, $matches),
+            'opencodeStream' => $controller->stream($request, $matches),
             'opencodeStop' => $controller->stop($request, $matches),
             'opencodeDelete' => $controller->delete($request, $matches),
             default => Response::json(500, ['ok' => false, 'error' => 'Aksi tidak dikenal.']),
