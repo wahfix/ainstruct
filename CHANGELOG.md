@@ -6,6 +6,42 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id/1.1.0/), dan v
 mengikuti [Semantic Versioning](https://semver.org/). Versi diambil dari git tag
 (`composer.json` sengaja tidak memuat field `version` — versi ditentukan oleh tag).
 
+## [0.4.0] - 2026-09-22
+
+### Added
+
+- `ainstruct webui` sesi OpenCode: jalankan `opencode run` dari browser, pantau
+  output, hentikan proses, lanjutkan sesi via session ID manual, dan hapus
+  catatan sesi (endpoint `DELETE` wajib `force: true`). Proses di-spawn
+  terdetach (`escapeshellarg`, tanpa shell bebas). WebUI tetap bind
+  `127.0.0.1` (tidak berubah); template built-in terproteksi; webui tidak
+  menjalankan distribusi. Enam endpoint API v1 terdokumentasi di
+  `web/README.md`.
+- Streaming output via **SSE** (Server-Sent Events): endpoint
+  `GET /api/opencode/sessions/{id}/stream` menyajikan `text/event-stream`.
+  Event `output` (chunk output baru), `done` (sesi selesai; klien tutup
+  koneksi), `timeout` (idle 5 menit), `error`. Frontend memakai `EventSource`
+  sehingga output tampil real-time tanpa delay polling; daftar sesi tetap
+  di-polling 3 detik.
+- Environment variable: `AINSTRUCT_OPENCODE_BIN` untuk path binari opencode,
+  `AINSTRUCT_STATE_HOME` / `XDG_STATE_HOME` untuk state directory sesi webui.
+
+### Tests
+
+- `tests/Feature/Web/OpencodeApiTest.php`: 14 test, 62 assertion — status,
+  start, stop, delete, list, validasi input, origin guard, dan stream (SSE
+  output + done event + header). Fixture `tests/Fixtures/bin/fake-opencode`
+  (spawn tanpa model asli).
+
+### Catatan
+
+- Rilis ini mencakup PR #60 (sesi opencode di WebUI) dan PR #61 (streaming
+  output via SSE). Branch protection `main` kini mewajibkan 13 status checks
+  (termasuk GitGuardian Security Checks).
+- Terverifikasi: health-check 128 pass, phpunit 121/121 (475 assertion),
+  pint/phpstan lokal hijau, CI Lint / Meta / Tests / WebUI smoke test sukses
+  di `main`.
+
 ## [0.3.0] - 2026-09-21
 
 ### Added
