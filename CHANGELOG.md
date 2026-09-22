@@ -11,27 +11,27 @@ mengikuti [Semantic Versioning](https://semver.org/). Versi diambil dari git tag
 ### Added
 
 - `ainstruct webui` sesi OpenCode: jalankan `opencode run` dari browser, pantau
-  output, hentikan proses, lanjutkan sesi via session ID manual, dan hapus
-  catatan sesi (endpoint `DELETE` wajib `force: true`). Proses di-spawn
-  terdetach (`escapeshellarg`, tanpa shell bebas). WebUI tetap bind
-  `127.0.0.1` (tidak berubah); template built-in terproteksi; webui tidak
-  menjalankan distribusi. Enam endpoint API v1 terdokumentasi di
-  `web/README.md`.
+  output live (polling output real-time; sebelum SSE: polling 2 detik),
+  hentikan proses, lanjutkan sesi via session ID manual, dan hapus catatan
+  sesi. Proses di-spawn terdetach (`escapeshellarg`, tanpa shell bebas).
+  WebUI tetap bind `127.0.0.1` (tidak berubah); template built-in
+  terproteksi; webui tidak menjalankan distribusi. Enam endpoint API v1
+  terdokumentasi di `web/README.md`.
 - Streaming output via **SSE** (Server-Sent Events): endpoint
-  `GET /api/opencode/sessions/{id}/stream` menyajikan `text/event-stream`.
-  Event `output` (chunk output baru), `done` (sesi selesai; klien tutup
-  koneksi), `timeout` (idle 5 menit), `error`. Frontend memakai `EventSource`
-  sehingga output tampil real-time tanpa delay polling; daftar sesi tetap
-  di-polling 3 detik.
-- Environment variable: `AINSTRUCT_OPENCODE_BIN` untuk path binari opencode,
-  `AINSTRUCT_STATE_HOME` / `XDG_STATE_HOME` untuk state directory sesi webui.
+  `GET /api/opencode/sessions/{id}/stream` menyajikan `text/event-stream`
+  (SSE chunk + done event + headers). Frontend memakai `EventSource` sehingga
+  output tampil real-time tanpa delay polling; daftar sesi tetap di-polling
+  3 detik.
+- Environment variable: `AINSTRUCT_OPENCODE_BIN` untuk menentukan path binari
+  opencode, `AINSTRUCT_STATE_HOME` / `XDG_STATE_HOME` untuk state directory
+  sesi webui.
 
 ### Tests
 
 - `tests/Feature/Web/OpencodeApiTest.php`: 14 test, 62 assertion — status,
-  start, stop, delete, list, validasi input, origin guard, dan stream (SSE
-  output + done event + header). Fixture `tests/Fixtures/bin/fake-opencode`
-  (spawn tanpa model asli).
+  start, stop, delete, list (dengan validasi input), destruktif force, dan
+  origin guard. Fixture `tests/Fixtures/bin/fake-opencode` (spawn tanpa model
+  asli).
 
 ### Catatan
 
