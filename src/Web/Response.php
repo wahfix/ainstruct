@@ -11,6 +11,7 @@ final class Response
         public readonly int $status,
         public readonly array $headers,
         public readonly string $body,
+        private readonly ?\Closure $streamCallback = null,
     ) {}
 
     /**
@@ -43,12 +44,44 @@ final class Response
         ], $headers), $content);
     }
 
+    /**
+     * Respons streaming (SSE). Callback dijalankan saat send(); di dalamnya
+     * boleh menulis output bertahap (echo + flush).
+     *
+     * @param  \Closure(): void  $callback
+     * @param  array<string, string>  $headers
+     */
+    public static function stream(\Closure $callback, int $status = 200, array $headers = []): self
+    {
+        return new self($status, array_merge([
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+            'X-Accel-Buffering' => 'no',
+        ], $headers), '', $callback);
+    }
+
     public function send(): void
     {
         http_response_code($this->status);
 
         foreach ($this->headers as $name => $value) {
             header($name.': '.$value);
+        }
+
+        if ($this->streamCallback !== null) {
+            // Matikan output buffering agar chunk terkirim seketika.
+            while (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+
+            try {
+                ($this->streamCallback)();
+            } catch (\Throwable $e) {
+                echo "event: error\ndata: ".json_encode(['error' => $e->getMessage()])."\n\n";
+                flush();
+            }
+
+            return;
         }
 
         echo $this->body;

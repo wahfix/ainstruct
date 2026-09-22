@@ -20,9 +20,10 @@ Opsi: `--host <ip>`, `--port <port>`, `--no-open` (lihat `ainstruct help webui`)
 - Penjelajah dan editor file template; built-in hanya bisa dibaca.
 - Informasi `ainstruct.source` untuk template yang pernah diimpor dari git.
 - **Sesi opencode**: jalankan `opencode run` di direktori proyek pilihan
-  (default: direktori tempat `ainstruct webui` dijalankan), pantau output live
-  (polling; server `php -S` single-thread sehingga proses di-spawn terdetach),
-  hentikan proses, lanjutkan sesi lama via session ID, dan hapus catatan sesi.
+  (default: direktori tempat `ainstruct webui` dijalankan), pantau output real-time
+  via SSE (Server-Sent Events; server `php -S` single-thread sehingga proses
+  di-spawn terdetach), hentikan proses, lanjutkan sesi lama via session ID,
+  dan hapus catatan sesi.
 
 ## Keamanan
 
@@ -65,6 +66,7 @@ Semua respons JSON dengan bentuk `{ok:true,data}` atau `{ok:false,error}`.
 | GET | `/api/opencode/sessions` | Daftar sesi yang dijalankan dari WebUI (terbaru dulu) |
 | POST | `/api/opencode/sessions` | Mulai sesi `opencode run` (direktori + prompt) |
 | GET | `/api/opencode/sessions/{id}` | Meta + status + output sesi (tail dibatasi) |
+| GET | `/api/opencode/sessions/{id}/stream` | SSE streaming output sesi (real-time) |
 | POST | `/api/opencode/sessions/{id}/stop` | Hentikan proses sesi |
 | DELETE | `/api/opencode/sessions/{id}` | Hapus catatan + log sesi (butuh force) |
 
@@ -78,6 +80,21 @@ Body `POST /api/opencode/sessions`:
 | `agent` | tidak | Diteruskan sebagai `opencode run --agent <nilai>` |
 | `session` | tidak | ID sesi opencode untuk lanjut (`--session`) |
 | `auto` | tidak | Bool; menambah `--auto` (setujui izin otomatis) |
+
+**SSE Stream** (`GET /api/opencode/sessions/{id}/stream`):
+
+Mengembalikan `text/event-stream`. Event yang dikirim:
+
+| Event | Data | Keterangan |
+| --- | --- | --- |
+| `output` | `{content: string}` | Chunk output baru dari proses |
+| `done` | `{status: string}` | Sesi selesai (`finished` atau `stopped`) |
+| `timeout` | `{message: string}` | Sesi timeout (5 menit idle) |
+| `error` | `{error: string}` | Error tak terduga |
+
+Klien harus menutup koneksi setelah menerima `done`, `timeout`, atau `error`.
+Browser `EventSource` menangani reconnect otomatis bila koneksi terputus sebelum
+`done` (misalnya karena `php -S` restart).
 
 Kode status: 200 sukses, 201 dibuat (create/start), 403 terproteksi atau asal
 dilarang, 404 template/sesi atau rute tidak ditemukan, 405 metode tidak

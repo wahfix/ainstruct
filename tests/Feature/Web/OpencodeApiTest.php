@@ -4,6 +4,8 @@ namespace Lace\Ainstruct\Tests\Feature\Web;
 
 use Illuminate\Container\Container;
 use Lace\Ainstruct\Bootstrap\AppServiceProvider;
+use Lace\Ainstruct\Services\Opencode\OpencodeService;
+use Lace\Ainstruct\Support\Paths;
 use Lace\Ainstruct\Tests\TestCase;
 use Lace\Ainstruct\Web\Kernel;
 use Lace\Ainstruct\Web\Request;
@@ -272,5 +274,64 @@ final class OpencodeApiTest extends TestCase
 
         $this->assertSame(403, $status);
         $this->assertFalse($payload['ok']);
+    }
+
+    public function test_stream_returns_404_for_unknown_session(): void
+    {
+        [$status, $payload] = $this->call('GET', '/api/opencode/sessions/webui-tidak-ada/stream');
+
+        $this->assertSame(404, $status);
+        $this->assertFalse($payload['ok']);
+    }
+
+    public function test_stream_delivers_output_and_done_event(): void
+    {
+        [$status, $payload] = $this->startSession();
+        $id = $payload['data']['id'];
+
+        $this->waitUntil(
+            fn (): bool => ($this->call('GET', '/api/opencode/sessions/'.$id)[1]['data']['meta']['status'] ?? null) === 'finished',
+            'Sesi tidak selesai dalam batas waktu.'
+        );
+
+        // Uji langsung service layer — hindari konflik ob_end_flush di Response::send().
+        $service = new OpencodeService(
+            Paths::fromEnvironment(),
+        );
+
+        $events = [];
+        $service->streamOutput($id, function (string $event, array $data) use (&$events): void {
+            $events[] = ['event' => $event, 'data' => $data];
+        });
+
+        $eventNames = array_column($events, 'event');
+
+        $this->assertContains('output', $eventNames);
+        $this->assertContains('done', $eventNames);
+
+        $outputEvents = array_filter($events, fn (array $e): bool => $e['event'] === 'output');
+        $allContent = array_reduce($outputEvents, fn (string $carry, array $e): string => $carry.$e['data']['content'], '');
+
+        $this->assertStringContainsString('FAKE-RUN: menerima instruksi', $allContent);
+
+        $doneEvent = array_values(array_filter($events, fn (array $e): bool => $e['event'] === 'done'))[0];
+        $this->assertSame('finished', $doneEvent['data']['status']);
+    }
+
+    public function test_stream_headers_are_sse(): void
+    {
+        [$status, $payload] = $this->startSession();
+        $id = $payload['data']['id'];
+
+        $this->waitUntil(
+            fn (): bool => ($this->call('GET', '/api/opencode/sessions/'.$id)[1]['data']['meta']['status'] ?? null) === 'finished',
+            'Sesi tidak selesai dalam batas waktu.'
+        );
+
+        [, , $response] = $this->call('GET', '/api/opencode/sessions/'.$id.'/stream');
+
+        $this->assertSame(200, $response->status);
+        $this->assertSame('text/event-stream', $response->headers['Content-Type']);
+        $this->assertSame('no-cache', $response->headers['Cache-Control']);
     }
 }

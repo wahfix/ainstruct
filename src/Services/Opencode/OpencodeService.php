@@ -209,6 +209,92 @@ final class OpencodeService
     }
 
     /**
+     * Apakah sesi masih dalam status running (PID hidup).
+     */
+    public function isRunning(string $id): bool
+    {
+        $meta = $this->readMeta($id);
+
+        if ($meta === null || ($meta['status'] ?? '') !== 'running') {
+            return false;
+        }
+
+        $pid = $this->readPid($id);
+
+        return $pid !== null && $this->processAlive($pid);
+    }
+
+    /**
+     * Stream output sesi via SSE. Callback $onChunk dipanggil untuk setiap
+     * event (event name, data array). Method blocked sampai sesi selesai
+     * atau timeout.
+     *
+     * @param  callable(string, array<string, mixed>): void  $onChunk
+     */
+    public function streamOutput(string $id, callable $onChunk): void
+    {
+        $this->requireSession($id);
+
+        $file = $this->sessionDir($id).DIRECTORY_SEPARATOR.'output.log';
+        $offset = 0;
+        $startTime = microtime(true);
+        $maxDuration = 300; // 5 menit
+        $sleepUs = 50_000; // 50ms
+
+        while (true) {
+            if (microtime(true) - $startTime > $maxDuration) {
+                $onChunk('timeout', ['message' => 'Sesi timeout setelah '.(int) $maxDuration.' detik.']);
+
+                return;
+            }
+
+            if (is_file($file)) {
+                $size = filesize($file);
+
+                if ($size > $offset) {
+                    $handle = @fopen($file, 'rb');
+
+                    if ($handle !== false) {
+                        fseek($handle, $offset);
+                        $chunk = (string) stream_get_contents($handle);
+                        fclose($handle);
+                        $offset = $size;
+
+                        $onChunk('output', ['content' => $chunk]);
+                    }
+                }
+            }
+
+            if (! $this->isRunning($id)) {
+                // Baca sisa file terakhir.
+                if (is_file($file)) {
+                    $size = filesize($file);
+
+                    if ($size > $offset) {
+                        $handle = @fopen($file, 'rb');
+
+                        if ($handle !== false) {
+                            fseek($handle, $offset);
+                            $chunk = (string) stream_get_contents($handle);
+                            fclose($handle);
+
+                            $onChunk('output', ['content' => $chunk]);
+                        }
+                    }
+                }
+
+                $meta = $this->readMeta($id);
+
+                $onChunk('done', ['status' => $meta['status'] ?? 'finished']);
+
+                return;
+            }
+
+            usleep($sleepUs);
+        }
+    }
+
+    /**
      * Hentikan sesi yang sedang berjalan (idempoten).
      */
     public function stop(string $id): void
