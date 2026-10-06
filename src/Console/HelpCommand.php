@@ -19,6 +19,7 @@ final class HelpCommand extends Command
         }
 
         return match ($topic) {
+            'author' => $this->authorDetail(),
             'distribute' => $this->distributeDetail(),
             'init' => $this->initDetail(),
             'status' => $this->statusDetail(),
@@ -45,6 +46,35 @@ final class HelpCommand extends Command
 
         $this->style()->blank();
         $this->style()->bullet($this->style()->dim('Kontrak lama: ainstruct <framework> = distribute (mis. ainstruct laravel).'));
+
+        return 0;
+    }
+
+    private function authorDetail(): int
+    {
+        $this->header('Author');
+        $this->style()->section('Fungsi');
+        $this->style()->bullet('Buat set instruksi AI (template baru) via sesi agent opencode dari repository contoh.');
+        $this->style()->bullet('Agent membaca playbook ARCHITECT-GUIDE (mode repo), mengeksplorasi repo contoh (input),');
+        $this->style()->bullet('lalu menulis set ke templates/<framework>/ (atau --output). Hasil diverifikasi kerangkanya.');
+        $this->style()->bullet('Mode docs (dokumentasi resmi) dan multi (kombinasi) tersedia di fase berikutnya.');
+        $this->style()->bullet('TIDAK pernah menebar artefak distribusi — output hanya ke templates/ atau --output.');
+        $this->style()->blank();
+        $this->style()->section('Usage');
+        $this->style()->bullet($this->style()->cyan('ainstruct author --mode repo --name <framework> --input <repo-contoh>'));
+        $this->style()->blank();
+        $this->style()->section('Opsi');
+        $this->pairLine('--mode <repo|docs|multi>', 'Strategi sumber bukti (default repo).');
+        $this->pairLine('--name <framework>', 'Nama template/framework (wajib).');
+        $this->pairLine('--input <path>', 'Repository contoh untuk mode repo (wajib).');
+        $this->pairLine('--spec <path>', 'Spesifikasi greenfield (mode docs, Fase 4).');
+        $this->pairLine('--output <path>', 'Direktori output (default cwd/templates/<framework>).');
+        $this->pairLine('--dry-run', 'Cetak rencana + prompt tanpa menjalankan sesi agent.');
+        $this->style()->blank();
+        $this->style()->section('Contoh');
+        $this->style()->bullet($this->style()->cyan('ainstruct author --mode repo --name myfw --input ./repo-contoh'));
+        $this->style()->bullet($this->style()->cyan('ainstruct author --name myfw --input ./repo-contoh --dry-run'));
+        $this->style()->blank();
 
         return 0;
     }
@@ -228,6 +258,7 @@ final class HelpCommand extends Command
     private function commands(): array
     {
         return [
+            ['name' => 'author', 'description' => 'Buat set instruksi AI via sesi agent opencode (mode repo).'],
             ['name' => 'distribute <framework>', 'description' => 'Distribusikan set instruksi AI ke proyek saat ini.'],
             ['name' => 'init', 'description' => 'Deteksi stack teknologi proyek & distribusikan otomatis.'],
             ['name' => 'status', 'description' => 'Periksa kesehatan instruksi AI (artefak & sinkronisasi master).'],
