@@ -4,6 +4,7 @@ namespace Lace\Ainstruct;
 
 use Illuminate\Container\Container;
 use Lace\Ainstruct\Abstractions\Commands\Command;
+use Lace\Ainstruct\Console\AuthorCommand;
 use Lace\Ainstruct\Console\DistributeCommand;
 use Lace\Ainstruct\Console\HelpCommand;
 use Lace\Ainstruct\Console\InitCommand;
@@ -23,6 +24,7 @@ final class Application
      * @var array<string, class-string<Command>>
      */
     private const COMMANDS = [
+        'author' => AuthorCommand::class,
         'distribute' => DistributeCommand::class,
         'status' => StatusCommand::class,
         'wipe' => WipeCommand::class,
