@@ -84,6 +84,18 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('path <nama>', $plain);
     }
 
+    public function test_help_author_shows_detail(): void
+    {
+        [$exit, $output] = $this->runCapture($this->makeApplication(), ['help', 'author']);
+
+        $plain = $this->stripAnsi($output);
+
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('ainstruct author', $plain);
+        $this->assertStringContainsString('--mode', $plain);
+        $this->assertStringContainsString('--dry-run', $plain);
+    }
+
     public function test_help_unknown_command_fails(): void
     {
         [$exit, $output] = $this->runCapture($this->makeApplication(), ['help', 'nonsense']);

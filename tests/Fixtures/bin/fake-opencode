@@ -4,6 +4,8 @@
 # Perilaku:
 #   --version                         mencetak versi palsu (exit 0)
 #   run <argv...>                     menulis seluruh argv ke $AINSTRUCT_FAKE_LOG
+#                                     (bila diset), menulis kerangka set
+#                                     instruksi minimal ke $AINSTRUCT_FAKE_OUTPUT_DIR
 #                                     (bila diset), tidur $AINSTRUCT_FAKE_SLEEP
 #                                     detik (bila diset; via exec agar PID proses
 #                                     = PID sleep sehingga `kill` langsung
@@ -19,6 +21,12 @@ fi
 if [ "${1:-}" = "run" ]; then
   if [ -n "${AINSTRUCT_FAKE_LOG:-}" ]; then
     printf '%s\n' "$@" > "$AINSTRUCT_FAKE_LOG"
+  fi
+
+  if [ -n "${AINSTRUCT_FAKE_OUTPUT_DIR:-}" ]; then
+    mkdir -p "$AINSTRUCT_FAKE_OUTPUT_DIR/ai-instructions"
+    printf '# Konstitusi tiruan\n' > "$AINSTRUCT_FAKE_OUTPUT_DIR/ai-instructions.md"
+    printf '# Modul tiruan\n' > "$AINSTRUCT_FAKE_OUTPUT_DIR/ai-instructions/01-governance.md"
   fi
 
   if [ -n "${AINSTRUCT_FAKE_SLEEP:-}" ]; then

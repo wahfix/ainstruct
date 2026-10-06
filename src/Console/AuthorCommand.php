@@ -3,19 +3,24 @@
 namespace Lace\Ainstruct\Console;
 
 use Lace\Ainstruct\Abstractions\Commands\Command;
+use Lace\Ainstruct\Exceptions\InvalidOperationException;
+use Lace\Ainstruct\Services\Author\AuthorRunnerService;
 
 /**
  * Authoring set instruksi via sesi agent.
  *
- * Fase 1: skeleton — parsing, validasi, dan dry-run. Eksekusi sesi agent
- * (spawn opencode) hadir di fase berikutnya. Command ini TIDAK pernah
- * menebar artefak distribusi; output authoring hanya ke templates/ atau
- * --output yang ditentukan.
+ * Fase 2: mode `repo` sudah berjalan — menyusun prompt (playbook + strategi
+ * sumber), spawn sesi opencode via AuthorRunnerService, stream output, lalu
+ * memverifikasi kerangka hasil di direktori output. Mode `docs` dan `multi`
+ * hadir di fase berikutnya. Command ini TIDAK pernah menebar artefak
+ * distribusi; output authoring hanya ke templates/ atau --output.
  */
 final class AuthorCommand extends Command
 {
     /** @var list<string> */
     private const MODES = ['repo', 'docs', 'multi'];
+
+    public function __construct(private AuthorRunnerService $runner) {}
 
     public function handle(Input $input): int
     {
@@ -66,18 +71,80 @@ final class AuthorCommand extends Command
         }
 
         $outputDir = $output ?? (getcwd() ?: '.').'/templates/'.$name;
+        $prompt = $this->runner->composeRepoPrompt($name, $inputPath, $outputDir);
 
         if ($dryRun) {
             $this->renderPlan($mode, $name, $inputPath, $spec, $outputDir);
+            $this->renderPrompt($prompt);
 
             return 0;
         }
 
-        $this->style()->error('Eksekusi authoring belum tersedia (hadir di fase berikutnya — agent runner).');
-        $this->style()->bullet('Jalankan dulu dengan '.$this->style()->cyan('--dry-run').' untuk melihat rencana.');
+        try {
+            $meta = $this->runner->start($prompt);
+        } catch (InvalidOperationException $e) {
+            $this->style()->error($e->getMessage());
+            $this->style()->blank();
+
+            return 1;
+        }
+
+        $this->style()->section('Sesi agent dimulai');
+        $this->style()->keyValue('ID', (string) $meta['id']);
+        $this->style()->keyValue('Direktori kerja', (string) $meta['directory']);
+        $this->style()->keyValue('Output', $outputDir);
         $this->style()->blank();
 
-        return 1;
+        $timedOut = false;
+
+        $this->runner->stream((string) $meta['id'], function (string $event, array $data) use (&$timedOut): void {
+            if ($event === 'output') {
+                $content = rtrim((string) ($data['content'] ?? ''), "\n");
+
+                if ($content !== '') {
+                    $this->style()->dim($content);
+                }
+            } elseif ($event === 'done') {
+                $this->style()->success('Sesi selesai.');
+            } elseif ($event === 'timeout') {
+                $timedOut = true;
+                $this->style()->warn((string) ($data['message'] ?? 'Sesi timeout.'));
+            }
+        });
+        $this->style()->blank();
+
+        if ($timedOut) {
+            $this->style()->bullet('Sesi masih berjalan. Pantau via '.$this->style()->cyan('ainstruct webui').',');
+            $this->style()->bullet('lalu jalankan ulang author saat sesi selesai.');
+            $this->style()->blank();
+
+            return 1;
+        }
+
+        $this->style()->section('Verifikasi kerangka');
+        $verification = $this->runner->verify($outputDir);
+
+        foreach ($verification['checks'] as $check) {
+            if ($check['passed']) {
+                $this->style()->check($check['label']);
+            } else {
+                $this->style()->cross($check['label']);
+            }
+        }
+
+        $this->style()->blank();
+
+        if (! $verification['ok']) {
+            $this->style()->error('Kerangka set instruksi belum lengkap — periksa output sesi lalu ulangi.');
+            $this->style()->blank();
+
+            return 1;
+        }
+
+        $this->style()->success('Set instruksi siap: '.$outputDir);
+        $this->style()->blank();
+
+        return 0;
     }
 
     private function renderPlan(string $mode, string $name, string $inputPath, ?string $spec, string $outputDir): void
@@ -97,6 +164,18 @@ final class AuthorCommand extends Command
         $this->style()->blank();
         $this->style()->bullet('Guard: authoring TIDAK pernah menebar artefak distribusi (AGENTS.md/CLAUDE.md/dll).');
         $this->style()->bullet('Alur: sesi agent (opencode) membaca playbook ARCHITECT-GUIDE dengan strategi sumber mode '.$mode.'.');
+        $this->style()->blank();
+    }
+
+    private function renderPrompt(string $prompt): void
+    {
+        $this->style()->section('Prompt sesi agent');
+        $this->style()->bullet($this->style()->dim('Dry-run: prompt ditampilkan, tidak dikirim ke sesi agent.'));
+
+        foreach (explode("\n", $prompt) as $line) {
+            $this->style()->line('   '.$line);
+        }
+
         $this->style()->blank();
     }
 }
