@@ -9,7 +9,9 @@ evidence source.
 > [!IMPORTANT]
 > Honesty marker: unlike a repo-snapshot bank, these snippets are NOT "copied unchanged from a
 > live codebase". They are the template's declared forms. Do not claim repo-verbatim status for
-> them (`17-agent-discipline.md` honesty).
+> them (`17-agent-discipline.md` honesty). **The single exception is §15 — Engine Evidence**
+> (WebUI architecture from the ainstruct engine): those snippets ARE live, verbatim code and
+> carry `engine canonical:` anchors — copy the shape, keep the declared forms as the copy target.
 
 ---
 
@@ -560,6 +562,224 @@ final class GroupRepositoryTest extends TestCase
 
 ---
 
+## 15. Engine Evidence — WebUI Architecture (live reference)
+
+The **ainstruct engine** (`github.com/wahfix/ainstruct` — the tool that distributes this very
+template) is itself a vanilla PHP project (PHP ^8.2, Composer, PSR-4, no full framework) that
+uses **Laravel's DI container** (`illuminate/container`) exactly as the declared forms in this
+bank describe. Its WebUI subsystem is the **live reference** for "vanilla PHP + Laravel DI":
+read it when a declared form feels abstract, or when wiring a container for the first time.
+
+> [!IMPORTANT]
+> Anchors here use `engine canonical: <path>:<line>` and point to the **ainstruct repository**
+> (the engine), NOT to your project. Customer projects copying these shapes MUST keep their own
+> namespace root (`App\…`) and their own `src/` layout; only the *pattern* transfers. This
+> section is the honest exception to the "declared forms" marker above — it IS verbatim from a
+> live codebase.
+
+### 15.1 Vanilla PHP + Laravel DI — the dependency stack
+
+`engine canonical: composer.json:20` — the engine's entire runtime dependency list:
+
+```json
+"require": {
+    "php": "^8.2",
+    "illuminate/container": "^11.0|^12.0|^13.0",
+    "laravel/prompts": "^0.3.0"
+}
+```
+
+No full framework. `illuminate/container` is the DI container; `laravel/prompts` is a CLI
+prompt helper. This is the live proof behind `template-baseline.md` (DI container MUST, no
+framework): the engine builds a complete WebUI + CLI on exactly that whitelist.
+
+### 15.2 Composition root — service provider
+
+`engine canonical: src/Bootstrap/AppServiceProvider.php:18`
+
+```php
+final class AppServiceProvider
+{
+    public function __construct(private Container $container) {}
+
+    public function register(): void
+    {
+        $this->container->singleton(Paths::class, fn (): Paths => Paths::fromEnvironment());
+        $this->container->singleton(Filesystem::class);
+
+        $this->container->singleton(TemplateRepositoryContract::class, TemplateRepository::class);
+        $this->container->singleton(MasterRepositoryContract::class, MasterRepository::class);
+        $this->container->singleton(InstructionFileRepositoryContract::class, InstructionFileRepository::class);
+        $this->container->singleton(StackDetectorContract::class, StackDetectionService::class);
+        $this->container->singleton(OpencodeService::class);
+    }
+}
+```
+
+Composition-root rules as live code: constructor takes the `Container`; contracts are bound to
+concrete implementations; concrete classes (services, actions) are left to auto-resolution;
+`singleton` is used for shared state (`Paths`, `Filesystem`, services).
+
+### 15.3 Entry — resolve from the container, never hand-build
+
+CLI (`engine canonical: src/Application.php:47` — resolve at :63):
+
+```php
+$command = $this->container->make(self::COMMANDS[$commandName]);
+
+return $command->handle(new Input($commandArgs));
+```
+
+HTTP front controller (`engine canonical: web/index.php:48`):
+
+```php
+$container = new Container;
+(new AppServiceProvider($container))->register();
+
+$kernel = new Kernel($container);
+$kernel->handle(Request::fromGlobals())->send();
+```
+
+Both entries: new container → register bindings → resolve → delegate. Entry stays thin; no
+business logic, no hand-built graph.
+
+### 15.4 HTTP kernel — routing, container dispatch, exception mapping
+
+`engine canonical: src/Web/Kernel.php:20` (routes :25, controller resolution :73, error map :190)
+
+```php
+private const ROUTES = [
+    ['GET', '#^/api/templates$#', 'templates'],
+    ['POST', '#^/api/templates$#', 'create'],
+    // …
+];
+```
+
+Controllers are resolved **from the container** (constructor injection), never hand-`new`ed:
+
+```php
+/** @var TemplateController $controller */
+$controller = $this->container->make(TemplateController::class);
+```
+
+Exceptions map to HTTP in one place (`error()`): ValidationException → 422,
+TemplateNotFoundException → 404, SessionNotFoundException → 404,
+TemplateProtectedException → 403, InvalidOperationException → 409, else 500 — the "entry maps
+errors" rule from `03-architecture.md`.
+
+### 15.5 Controller — constructor injection of Actions/Services, thin methods
+
+`engine canonical: src/Web/Controllers/TemplateController.php:27`
+
+```php
+final class TemplateController
+{
+    public function __construct(
+        private GetTemplatesAction $getTemplatesAction,
+        private CreateTemplateAction $createTemplateAction,
+        // … the other template actions …
+        private TemplateFileService $files,
+        private SourceImporter $importer,
+    ) {}
+
+    public function templates(Request $request): Response
+    {
+        $templates = $this->getTemplatesAction->handle();
+        // … split builtin/custom …
+        return Response::json(200, ['ok' => true, 'data' => ['builtin' => $builtin, 'custom' => $custom]]);
+    }
+}
+```
+
+Note: the CLI command (`engine canonical: src/Console/TemplateCommand.php:25`) injects the
+**same Actions** — one source of truth for template logic, two thin entries on top.
+
+### 15.6 Service — domain-named, constructor injection, honest state reporting
+
+`engine canonical: src/Services/Opencode/OpencodeService.php:24`
+
+```php
+final class OpencodeService
+{
+    private const MAX_OUTPUT_BYTES = 200_000;
+
+    public function __construct(private Paths $paths) {}
+
+    public function start(array $input): array
+    {
+        // … per-method validation, then spawn …
+    }
+}
+```
+
+Domain-named (`OpencodeService`, never `Service.php`), constructor injection, input validated
+at the public method boundary. The class documents a state machine (running → finished) and
+**honestly reports `exitCode: null` when it cannot capture it** — honesty discipline applies to
+engine code too (`17-agent-discipline.md`).
+
+### 15.7 Action — base class + contract, as live code
+
+`engine canonical: src/Abstractions/Actions/Action.php:8` and
+`engine canonical: src/Contracts/Actions/RuledActionContract.php:5`
+
+```php
+abstract class Action
+{
+    public function handle(array $payload = []): mixed
+    {
+        if ($this instanceof RuledActionContract) {
+            $validated = Validator::fromRules($this->rules())->validate($payload);
+
+            return $this->handler($validated);
+        }
+
+        return $this->handler($payload);
+    }
+
+    abstract protected function handler(array $payload): mixed;
+}
+```
+
+Plain action with contract injection (`engine canonical: src/Actions/Template/GetTemplatesAction.php:9`):
+
+```php
+final class GetTemplatesAction extends Action
+{
+    public function __construct(private TemplateRepositoryContract $templates) {}
+
+    protected function handler(array $payload): array
+    {
+        return $this->templates->all();
+    }
+}
+```
+
+### 15.8 Request / Response — transport value objects
+
+`engine canonical: src/Web/Request.php:9` (immutable request; `fromGlobals()` is the only
+globals touch-point so tests build instances directly) and
+`engine canonical: src/Web/Response.php:5` (named constructors `json()`, `html()`, `stream()`
+for SSE; `send()` is the only output point). Transport never carries business logic.
+
+### 15.9 Divergence — engine live shape vs declared form
+
+Where engine and declared form differ, **the declared form in this bank is the copy target**;
+the engine is the reference, not a second canonical:
+
+| Concern | Declared form (above) | Engine live shape |
+|---|---|---|
+| `handle()` base | `handle(mixed $payload = null): mixed` (§1) | `handle(array $payload = []): mixed` |
+| Ruled action payload | `handler($payload, $validatedPayload)` (§3) | `handler($validated)` — validated array replaces payload |
+| `rules()` signature | `rules(array $payload): array` (§2) | `rules(): array` (no argument) |
+| Contract namespace | `src/Contracts/Action/…` (§2-) | `src/Contracts/Actions/…` (plural) |
+
+Same architecture, older/leaner engine shape. When a consumer project already carries engine-
+like code from an earlier version, the project's real code is the highest evidence source
+(`01-governance.md`) — record the deviation in `MASTER_BUILD_SPECIFICATION.md` or migrate to
+the declared form (`template-baseline.md`).
+
+---
+
 ## Cross-References
 
 - Pattern selection: Necessity Ladder — `03-architecture.md`.
@@ -567,3 +787,6 @@ final class GroupRepositoryTest extends TestCase
 - Security on input: `07-security.md`; data layer: `13-database.md`.
 - Quality gates & senior review: `10-quality-gates.md`.
 - Project overrides: `template-baseline.md`, `MASTER_BUILD_SPECIFICATION.md`.
+- Live reference (vanilla PHP + Laravel DI, full WebUI example): §15 Engine Evidence — see
+  `ainstruct` `src/Bootstrap/AppServiceProvider.php`, `src/Web/Kernel.php`,
+  `src/Web/Controllers/`, `src/Services/Opencode/OpencodeService.php`, `web/index.php`.
