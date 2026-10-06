@@ -21,7 +21,7 @@ This directory is the module set of the vanilla-php instruction system. Read the
 | `10-quality-gates.md` | Gates, senior self-review, anti-AI-slop gate | GLOBAL |
 | `11-forbidden-behavior.md` | Single source of truth for prohibitions | GLOBAL |
 | `12-project-specific/template-baseline.md` | Canonical vanilla-php decisions (declared, honest) | TEMPLATE |
-| `12-project-specific/canonical-snippets.md` | Declared snippet bank (full + minimum forms) | TEMPLATE + PROJECT |
+| `12-project-specific/canonical-snippets.md` | Declared snippet bank (full + minimum forms) + §15 Engine Evidence live reference (Laravel DI in vanilla PHP) | TEMPLATE + PROJECT |
 | `12-project-specific/{project}.md` | Project invariants (added per consumer project) | PROJECT-SPECIFIC |
 | `13-database.md` | Data access invariants (conditional on DB) | UNIVERSAL + PROJECT |
 | `14-frontend.md` | Frontend rules (conditional) | CONDITIONAL |

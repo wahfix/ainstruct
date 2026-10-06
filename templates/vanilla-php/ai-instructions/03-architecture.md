@@ -294,7 +294,9 @@ Key binding decisions for the vanilla-php template (TEMPLATE scope — recorded 
 **`12-project-specific/canonical-snippets.md` is the authoritative snippet bank** (Action base,
 ruled/plain actions, repositories, services, contracts, entities, bootstrap wiring, tests). Its
 snippets are the **declared canonical forms** of this template — copy them verbatim for new code
-until the project's own code establishes a different precedent.
+until the project's own code establishes a different precedent. §15 (Engine Evidence) points to
+the ainstruct engine's live WebUI as a working example of these forms (vanilla PHP + Laravel DI)
+— an honest exception to the declared-form rule, labeled inside the bank.
 
 **Invocation protocol (MUST):**
 
