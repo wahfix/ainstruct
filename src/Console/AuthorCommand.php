@@ -41,16 +41,16 @@ final class AuthorCommand extends Command
             return 1;
         }
 
-        if ($mode !== 'repo') {
-            $this->style()->error('Mode `'.$mode.'` belum tersedia (hadir di fase berikutnya).');
-            $this->style()->bullet('Untuk sekarang pakai: '.$this->style()->cyan('--mode repo'));
+        if ($name === null || $name === '') {
+            $this->style()->error('Framework wajib diisi: '.$this->style()->cyan('--name <framework>'));
             $this->style()->blank();
 
             return 1;
         }
 
-        if ($name === null || $name === '') {
-            $this->style()->error('Framework wajib diisi: '.$this->style()->cyan('--name <framework>'));
+        if ($mode === 'docs' || $mode === 'multi') {
+            $this->style()->error('Mode `'.$mode.'` belum tersedia (hadir di fase berikutnya).');
+            $this->style()->bullet('Untuk sekarang pakai: '.$this->style()->cyan('--mode repo'));
             $this->style()->blank();
 
             return 1;
