@@ -48,30 +48,43 @@ final class AuthorCommand extends Command
             return 1;
         }
 
-        if ($mode === 'docs' || $mode === 'multi') {
+        if ($mode === 'multi') {
             $this->style()->error('Mode `'.$mode.'` belum tersedia (hadir di fase berikutnya).');
-            $this->style()->bullet('Untuk sekarang pakai: '.$this->style()->cyan('--mode repo'));
+            $this->style()->bullet('Untuk sekarang pakai: '.$this->style()->cyan('--mode repo').' atau '.$this->style()->cyan('--mode docs'));
             $this->style()->blank();
 
             return 1;
         }
 
-        if ($inputPath === null || $inputPath === '') {
-            $this->style()->error('Input wajib diisi: '.$this->style()->cyan('--input <path-repo-contoh>'));
-            $this->style()->blank();
+        if ($mode === 'repo') {
+            if ($inputPath === null || $inputPath === '') {
+                $this->style()->error('Input wajib diisi: '.$this->style()->cyan('--input <path-repo-contoh>'));
+                $this->style()->blank();
 
-            return 1;
-        }
+                return 1;
+            }
 
-        if (! is_dir($inputPath)) {
-            $this->style()->error('Input bukan direktori yang ada: '.$inputPath);
-            $this->style()->blank();
+            if (! is_dir($inputPath)) {
+                $this->style()->error('Input bukan direktori yang ada: '.$inputPath);
+                $this->style()->blank();
 
-            return 1;
+                return 1;
+            }
+        } else { // docs
+            if ($inputPath === null || $inputPath === '') {
+                $this->style()->error('Input wajib diisi untuk mode docs: '.$this->style()->cyan('--input <url-dokumen-atau-daftar-url>'));
+                $this->style()->blank();
+
+                return 1;
+            }
         }
 
         $outputDir = $output ?? (getcwd() ?: '.').'/templates/'.$name;
-        $prompt = $this->runner->composeRepoPrompt($name, $inputPath, $outputDir);
+        if ($mode === 'repo') {
+            $prompt = $this->runner->composeRepoPrompt($name, $inputPath, $outputDir);
+        } else {
+            $prompt = $this->runner->composeDocsPrompt($name, $inputPath, $outputDir, $spec);
+        }
 
         if ($dryRun) {
             $this->renderPlan($mode, $name, $inputPath, $spec, $outputDir);

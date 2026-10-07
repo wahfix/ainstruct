@@ -79,10 +79,11 @@ final class AuthorCommandTest extends TestCase
     {
         $app = $this->makeApplication();
 
-        [$exit, $output] = $this->runCapture($app, ['author', '--mode', 'docs', '--name', 'x', '--input', 'https://example.com']);
+        [$exit, $output] = $this->runCapture($app, ['author', '--mode', 'docs', '--name', 'x', '--input', 'https://example.com', '--dry-run']);
 
-        $this->assertSame(1, $exit);
-        $this->assertStringContainsString('belum tersedia', $this->stripAnsi($output));
+        $this->assertSame(0, $exit);
+        $this->assertStringContainsString('Rencana authoring', $this->stripAnsi($output));
+        $this->assertStringContainsString('docs', $this->stripAnsi($output));
     }
 
     public function test_author_multi_mode_not_available_yet(): void
