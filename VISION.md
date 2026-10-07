@@ -14,7 +14,7 @@ LAPISAN 1 — ARTEFAK (yang dikonsumsi proyek konsumen)
 LAPISAN 2 — PABRIK (yang memproduksi & menjaga lapisan 1)
 ├── AGENTS.md        self-instruction arsitek (peran, larangan, aturan git)
 ├── ARCHITECT-GUIDE.md   playbook authoring (wajib dibaca penuh)
-├── bin/             ainstruct (engine PHP — paket Composer lace/ainstruct) (HANYA di proyek konsumen)
+├── bin/             ainstruct (engine PHP — paket Composer lace/ainstruct) (subcommand distribusi HANYA di proyek konsumen; author/webui aman di sini)
 ├── scripts/         health-check, install-hooks
 └── .github/workflows/  CI: markdownlint, shellcheck, integrity, smoke test, meta
 
@@ -72,7 +72,9 @@ DIPRODUKSI → DIUJI → DIDISTRIBUSIKAN → DIADAPTASI → DIINGAT
   semua salinan; memori & kepribadian berbeda per operator. Tidak ada data operator
   yang saling menimpa — `operator-memory/backup.sh` selalu menarik lalu menggabungkan.
 - **Batasan tetap berlaku**: repo ini BUKAN proyek konsumen; artefak distribusi
-  tidak pernah di-commit ke sini; `main` dilindungi (lewat PR); `bin/ainstruct`
-  hanya dijalankan di root proyek konsumen.
+  tidak pernah di-commit ke sini; `main` dilindungi (lewat PR); subcommand distribusi
+  `bin/ainstruct` (`distribute`/default, `reset`, `wipe`, `init` non-`--dry-run`)
+  hanya dijalankan di root proyek konsumen — subcommand non-distribusi `author`
+  (sesi authoring menulis `templates/<Framework>/`) dan `webui` aman di root repo ini.
 - **Kejujuran skala**: lapisan meta adalah investasi — nilainya terukur dari
   seberapa presisi instruksi yang diproduksi dan seberapa mulus adaptasi per operator.

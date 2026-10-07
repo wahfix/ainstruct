@@ -3,19 +3,26 @@
 > [!CRITICAL]
 > **INSTRUKSI UNTUK DIRI SENDIRI.** File ini adalah playbook yang menentukan cara Anda
 > (opencode / AI coding agent) meng-generate **set instruksi baru** untuk sebuah repository
-> yang sudah jadi.
+> proyek yang sudah jadi, framework (dari dokumentasi resmi), atau proyek greenfield.
 >
 > Repository AI-Instructions ini adalah **bengkel authoring**, BUKAN proyek konsumen.
-> DILARANG KERAS menjalankan `./bin/ainstruct` di root repository ini — CLI hanya
-> untuk root proyek konsumen; menjalankannya di sini menimpa AGENTS.md (self-instruction)
-> dan memunculkan artefak distribusi di root dengan isi hasil generate = **KEGAGALAN TOTAL**
-> (selengkapnya di bagian 10 & 11).
+> DILARANG KERAS menjalankan subcommand **distribusi** `ainstruct` (`distribute`/default,
+> `reset`, `wipe`, dan `init` non-`--dry-run`) di root repository ini — subcommand itu
+> menebar artefak hasil generate ke `pwd` dan hanya untuk root proyek konsumen;
+> menjalankannya di sini menimpa AGENTS.md (self-instruction) dan memunculkan artefak
+> distribusi di root dengan isi hasil generate = **KEGAGALAN TOTAL** (selengkapnya di
+> bagian 10 & 11). Subcommand non-distribusi `author` (sesi authoring → menulis
+> `templates/<Framework>/` atau `--output`) dan `webui` (server lokal, tidak pernah
+> distribusi) **aman** dijalankan di sini.
 >
 > Baca file ini secara lengkap SEBELUM memulai tugas generate. Jangan pernah melewati
-> langkah eksplorasi. Jangan pernah menulis set instruksi tanpa memahami repository.
+> langkah eksplorasi (atau perumusan spec untuk kelas greenfield, bagian 6E). Jangan
+> pernah menulis set instruksi tanpa memahami repository / tanpa jangkar bukti.
 >
 > Pemicu penggunaan: **user menunjuk sebuah repository proyek yang sudah jadi** dan meminta
-> Anda membuat set instruksi baru (misal: "buat set instruksi untuk repo ini").
+> Anda membuat set instruksi baru (misal: "buat set instruksi untuk repo ini"), **atau
+> menunjuk proyek greenfield** (belum ada kode; jangkar = spec) dan meminta set instruksi
+> untuk membangunnya. Tiga kelas output dijelaskan di bagian 6E (Source Strategy).
 
 ---
 
@@ -42,10 +49,26 @@ dapat mengimplementasikan fitur yang belum pernah ada sehingga kodenya tampak di
 tim engineering yang sama yang membuat repository.**
 
 **REFERENCE BAR**: tingkat kompleksitas, kedetilan, dan kelengkapan set hasil generasi
-WAJIB setara atau lebih tinggi dari set acuan `templates/laravel/` (konstitusi lengkap, seluruh modul
-terisi actionable + evidence anchor, invariants project-specific, bank snippet kanonik,
-quality gates + gates proyek, referensi cepat). Set yang lebih tipis / lebih generik dari
-acuan = BELUM selesai. Detail penilaiannya di bagian 6D.
+dinilai per kelas output (bagian 6E):
+
+- **Level PENUH (kelas 1 — project instruction set)**: setara atau lebih tinggi dari set
+  acuan `templates/laravel/` (konstitusi lengkap, seluruh modul terisi actionable +
+  evidence anchor implementasi nyata, invariants project-specific, bank snippet kanonik
+  verbatim, quality gates + gates proyek, referensi cepat). Set yang lebih tipis / lebih
+  generik dari acuan = BELUM selesai.
+- **Level TEMPLATE (kelas 2 — framework template set)**: actionable + grounded di
+  dokumentasi resmi (anchor `URL + versi + tanggal akses`, declared forms), bukan
+  implementasi nyata; konklusi berbasis docs = ceiling `WEAK`; horizon "sampai proyek
+  membuktikan" — kode proyek riil menang atas docs. Bank snippet boleh dari docs
+  (verbatim + anchor), tidak wajib dari repo target. Set tanpa honesty marker
+  (URL/versi/tanggal) = BELUM selesai.
+- **Level GREENFIELD (kelas 3 — greenfield project set)**: set instruksi untuk proyek
+  tanpa kode; jangkar tunggal = `MASTER_BUILD_SPECIFICATION.md` (protokol Klausa 5),
+  dilengkapi docs resmi untuk konvensi yang belum dideklarasikan spec. Re-grounding
+  WAJIB saat kode lahir: set harus di-audit ulang terhadap implementasi nyata.
+  Set tanpa spec lengkap = BELUM selesai.
+
+Detail penilaiannya di bagian 6D.
 
 ### SIFAT META (posisi repo ini — baca sebelum bekerja)
 
@@ -75,7 +98,7 @@ Anda bekerja di dalam folder root system instruksi AI:
 /home/ubuntu/Project/WahFix/AI-Instructions/
 ├── AGENTS.md                   ← Self-instruction Anda (pointer ke playbook + larangan)
 ├── ARCHITECT-GUIDE.md          ← File ini (playbook Anda)
-├── bin/                        ← CLI & distribusi: ainstruct (engine PHP — paket Composer lace/ainstruct) (HANYA proyek konsumen)
+├── bin/                        ← CLI & distribusi: ainstruct (engine PHP — paket Composer lace/ainstruct) (subcommand distribusi HANYA proyek konsumen; author/webui aman di sini)
 ├── scripts/                    ← Quality gates (health-check, antislop-check, install-hooks)
 ├── .gitignore                  ← Mencegah artefak distribusi ter-commit
 └── templates/<Framework>/      ← Satu folder per repository/framework yang telah dianalisis
@@ -341,6 +364,10 @@ KLAUSA 5 — PROTOKOL MASTER_BUILD_SPECIFICATION (WAJIB BACA SEBELUM KODE)
 - Prioritas: protokol ini LEVEL 2 — kalah hanya dari instruksi eksplisit pengguna (LEVEL 1);
   mengalahkan asumsi, best practice generik, dan tebakan. Pelanggaran protokol ini
   = KEGAGALAN TOTAL.
+- Di kelas 3 (greenfield, bagian 6E), protokol ini adalah **satu-satunya jangkar proyek**:
+  spec yang lengkap dan presisi WAJIB ada SEBELUM set instruksi ditulis, dan re-grounding
+  set terhadap kode nyata WAJIB dilakukan saat kode lahir. Pelanggaran atau re-grounding
+  yang ditunda = KEGAGALAN TOTAL.
 ```
 
 Klausa 2–4 wajib dituangkan secara eksplisit di konstitusi (`ai-instructions.md`) dan modul
@@ -470,14 +497,16 @@ yang saling melengkapi (lakukan keduanya):
 - Bila ada 2 variasi, tampilkan keduanya, tandai kanonik, dan catat keputusan di
   `01-governance.md`.
 
-### D. REFERENCE BAR — STANDAR MINIMUM KELENGKAPAN SET
+### D. REFERENCE BAR — STANDAR MINIMUM KELENGKAPAN SET (PER KELAS OUTPUT)
 
 Saat authoring, tambahkan set `templates/laravel/` sebagai **bahan referensi** ke dalam instruksi
 Anda sendiri: belajar/baca seluruh modul `templates/laravel/ai-instructions/*` (01–11 dan 13–21), README,
 `12-project-specific/lingusid.md`, dan `12-project-specific/canonical-snippets.md` sebagai
-standar tingkat presisi, gaya bahasa, struktur tabel, dan pola bukti yang harus dicapai.
+standar tingkat presisi, gaya bahasa, struktur tabel, dan pola bukti yang harus dicapai
+untuk kelas 1 (level PENUH). Kelas 2 dan 3 menyesuaikan cakupan ini (bagian 6E).
 
-Set hasil generasi DIVERIFIKASI terhadap checklist kelengkapan berikut (semua WAJIB ada):
+**Level PENUH (kelas 1 — project instruction set)** — set hasil generasi DIVERIFIKASI
+terhadap checklist kelengkapan berikut (semua WAJIB ada):
 
 - **Konstitusi** `ai-instructions.md` lengkap (header, blok CRITICAL baca-sebelum-menulis,
   file map, prinsip, priority system, rule scope, semantic strength, resolusi konflik,
@@ -492,6 +521,69 @@ Set hasil generasi DIVERIFIKASI terhadap checklist kelengkapan berikut (semua WA
 
 Set yang setelah diverifikasi masih "lebih tipis/generik" daripada acuan `templates/laravel/` dianggap
 BELUM SELESAI dan wajib diperkaya sebelum dianggap selesai.
+
+**Level TEMPLATE (kelas 2 — framework template set)** — checklist minimum:
+
+- **Konstitusi + seluruh modul 01–11 terisi** actionable untuk framework target, grounded
+  di **dokumentasi resmi**, bukan stensilan generik.
+- **Honesty marker di setiap aturan penting**: `URL resmi` + **versi** yang dirujuk +
+  **tanggal akses**; dilarang anchor palsu (path/docs yang tidak ada).
+- **Declared forms**: bila docs menyebut beberapa gaya, semua dideklarasikan dan ditandai
+  mana kanonik/opsional; konklusi berbasis docs = ceiling `WEAK` (bukan CONFIRMED).
+- **Bank snippet** boleh berisi potongan verbatim dari docs (dengan anchor URL+versi);
+  tidak wajib dari repo target.
+- **Batas horizon eksplisit**: "sampai proyek membuktikan" — kode proyek riil yang
+  bertentangan dengan docs menang; override via spec proyek diperbolehkan.
+- Set tanpa honesty marker / tanpa declared forms / tanpa batas horizon = BELUM SELESAI.
+
+**Level GREENFIELD (kelas 3 — greenfield project set)** — checklist minimum:
+
+- **`MASTER_BUILD_SPECIFICATION.md` lengkap & presisi** (Klausa 5) = satu-satunya jangkar
+  proyek; seluruh modul grounded di spec + docs pengisi konvensi (anchor URL+versi+tanggal).
+- **Konstitusi + modul 01–11** terisi sesuai spec; aturan yang belum bisa diputuskan
+  ditandai "menunggu keputusan/kode" — bukan diisi tebakan.
+- **Re-grounding terjadwal**: kewajiban tertulis di konstitusi & `10-quality-gates.md` —
+  saat kode lahir, set WAJIB di-audit ulang terhadap implementasi nyata (konversi ke
+  kelas 1 atau pembaruan anchor).
+- **Batas ketidakpastian eksplisit** per aturan (UNKNOWN/WEAK dari spec) — jangan
+  menyamar jadi CONFIRMED.
+
+### E. SOURCE STRATEGY — TIGA KELAS OUTPUT
+
+Set instruksi yang Anda hasilkan termasuk salah satu dari **tiga kelas output**. Kelas
+menentukan **apa jangkar buktinya** (source), **bagaimana diproduksi**, **horizon
+validitasnya**, dan **bar kelengkapannya** (bagian 6D):
+
+| Kelas | Output | Anchor bukti | Diproduksi | Horizon | Preseden |
+|---|---|---|---|---|---|
+| 1 | Project instruction set | Implementasi nyata (path file repo) | Mode repo (repository proyek sudah jadi) | Permanen (berevolusi dengan proyek) | `templates/laravel/` |
+| 2 | Framework template set | Dokumentasi resmi: `URL + versi + tanggal akses`; declared forms | Mode docs (reuse, tanpa repo jadi) | "Sampai proyek membuktikan"; override via spec; kode menang | `templates/vanilla-php/` |
+| 3 | Greenfield project set | `MASTER_BUILD_SPECIFICATION.md` + docs pengisi konvensi | Mode docs + `--spec` (proyek tanpa kode) | **Re-grounding WAJIB saat kode lahir** | — (baru) |
+
+Pemetaan mode → kelas (dieksekusi sebagai sesi authoring, bukan engine PHP):
+
+- `--mode repo` → kelas 1. Eksplorasi implementasi (bagian 3), analisis (bagian 4),
+  snippet kanonik verbatim (Phase 7), bar level PENUH.
+- `--mode docs` → kelas 2. Riset dokumentasi resmi (tool agent `webfetch`/`websearch`),
+  segala konklusi berbasis docs ber-ceiling `WEAK`; honesty marker wajib
+  (`URL + versi + tanggal akses`), dilarang anchor palsu.
+- `--mode docs --spec <path>` → kelas 3. Spec = satu-satunya jangkar proyek; docs hanya
+  mengisi konvensi yang belum dideklarasikan spec. Re-grounding terjadwal (bagian 6D).
+- `--mode multi --input <repo> --input <docs-url>` → kelas 1 diperkaya: docs **hanya
+  mengisi celah WEAK/UNKNOWN** dari implementasi, **tidak pernah menimpa implementasi**
+  (hierarki Phase 5 pemutus; konflik selevel → eskala operator, dilarang pilih diam-diam).
+
+**Inviolable di semua kelas:**
+
+- **Klausa 1–5** (bagian 6) berlaku penuh; pada kelas 3, "repository target" dibaca
+  "project target = spec".
+- **Hierarki bukti**: implementasi > docs (Phase 5). Docs tidak pernah mengalahkan
+  implementasi nyata; kode menang atas docs pada kelas 2 bila proyek membuktikan.
+- **Klasifikasi keyakinan** (Phase 6): docs ceiling = `WEAK`; hanya implementasi nyata
+  yang bisa memberi `CONFIRMED`/`STRONG INFERENCE`.
+- **Honesty marker**: anchor bukti harus nyata — `path` (kelas 1), `URL + versi + tanggal`
+  (kelas 2/3); dilarang anchor palsu.
+- **Quality gates & verifikasi** (bagian 9) disesuaikan per kelas.
 
 ---
 
@@ -578,11 +670,30 @@ Sebelum menyelesaikan, pastikan jawaban berikut semuanya YA:
 - **Protokol spec**: Klausa 5 tertulis eksplisit di konstitusi + modul 01/02/10/11 +
   referensi cepat? Alur "file spec tidak ada → STOP + tanya operator mendetil → buat file
   lengkap → baru kode" terdokumentasi jelas?
-- **Reference bar**: Set setara/lebih tinggi dari `templates/laravel/`? Bank snippet terpusat ada
-  dan berisi cakupan minimum (6C)? Set tidak lebih tipis/generik dari acuan?
+- **Reference bar**: Set memenuhi bar level kelasnya (bagian 6D)? Kelas 1: setara/lebih
+  tinggi dari `templates/laravel/`, bank snippet terpusat ada dan berisi cakupan minimum
+  (6C), tidak lebih tipis/generik dari acuan. Kelas 2: honesty marker (URL+versi+tanggal),
+  declared forms, batas horizon eksplisit. Kelas 3: spec lengkap sebagai jangkar,
+  re-grounding terjadwal, batas ketidakpastian eksplisit.
 - **Repo authoring bersih**: Tidak ada artefak distribusi (AGENTS.md isi hasil-generate,
   CLAUDE.md, GEMINI.md, .cursorrules, ai-instructions/, dll.) yang ter-commit di repo
   AI-Instructions ini?
+
+**Verifikasi tambahan per kelas output (bagian 6E):**
+
+Kelas 2 (framework template set):
+
+- Setiap aturan penting punya `URL resmi + versi + tanggal akses`? Tidak ada anchor palsu?
+- Semua declared forms didaftarkan dan ditandai kanonik/opsional?
+- Konklusi berbasis docs ditandai `WEAK`, bukan `CONFIRMED`/`STRONG`?
+- Batas horizon "sampai proyek membuktikan; kode menang" terdokumentasi?
+
+Kelas 3 (greenfield project set):
+
+- `MASTER_BUILD_SPECIFICATION.md` lengkap, detil, presisi dan menjadi satu-satunya jangkar?
+- Semua modul grounded di spec + docs pengisi (anchor URL+versi+tanggal); tidak ada aturan
+  yang diisi tebakan tanpa penanda ketidakpastian?
+- Kewajiban re-grounding saat kode lahir tertulis eksplisit (konstitusi + `10-quality-gates.md`)?
 
 Jika ada yang TIDAK → lanjutkan analisis sebelum menghasilkan output.
 
@@ -603,7 +714,8 @@ Setelah set instruksi selesai, WAJIB:
    ainstruct <nama-folder>
    ```
 
-   Contoh: `ainstruct laravel` (atau `./bin/ainstruct laravel` dari checkout repo ini).
+   Contoh: `ainstruct laravel` (atau `./bin/ainstruct laravel` dipanggil dari **root proyek
+   konsumen**, memakai binary yang ada di checkout repo ini).
    Ini mendistribusikan `ai-instructions.md` ke `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
    `.github/copilot-instructions.md`, `.cursorrules`, `.cursor/rules/...`, `.windsurfrules`,
    `.clinerules/...`, `.continuerules`, `.aider.conf.yml`, `opencode.json` (opencode —
@@ -611,8 +723,9 @@ Setelah set instruksi selesai, WAJIB:
    — semua di **proyek konsumen**.
 
    Adaptor eksekusi: `bin/ainstruct` (bin paket `lace/ainstruct` untuk Composer) —
-   satu-satunya kanal distribusi. CLI mendukung subcommand `distribute`, `reset`,
-   `wipe`, `init`, dan `template`. Rincian di README `Adaptor: Composer`.
+   satu-satunya kanal distribusi. CLI mendukung subcommand distribusi `distribute`,
+   `reset`, `wipe`, `init`, serta subcommand non-distribusi `author` (sesi authoring),
+   `status`, `webui`, dan `template`. Rincian di README `Adaptor: Composer`.
 
    Template milik **konsumen** dikelola via `template` (list/create/clone/update/
    delete/path) dan hidup di `${AINSTRUCT_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ainstruct}/templates`,
@@ -621,11 +734,15 @@ Setelah set instruksi selesai, WAJIB:
    `template clone`. Rincian di README `Template Manager: Template Milik Konsumen`.
 
    > [!CRITICAL]
-   > **DILARANG KERAS menjalankan `./bin/ainstruct` di root repository AI-Instructions
-   > ini.** CLI dengan target root repo authoring menimpa instruksi khusus AI repositori ini
-   > (AGENTS.md, dan memunculkan artefak distribusi di root) dengan isi hasil generate
-   > = **KESALAHAN KRITIS, KEGAGALAN TOTAL**. CLI ini hanya untuk root **proyek
-   > konsumen** tempat toolboxes AI memang dituju.
+   > **DILARANG KERAS menjalankan subcommand distribusi `ainstruct` di root repository
+   > AI-Instructions ini** — `distribute`/default, `reset`, `wipe`, dan `init` non-`--dry-run`
+   > (semuanya menebar artefak hasil generate ke `pwd`). CLI dengan target root repo
+   > authoring menimpa instruksi khusus AI repositori ini (AGENTS.md, dan memunculkan
+   > artefak distribusi di root) dengan isi hasil generate = **KESALAHAN KRITIS,
+   > KEGAGALAN TOTAL**. Subcommand distribusi ini hanya untuk root **proyek konsumen**
+   > tempat toolboxes AI memang dituju. Subcommand non-distribusi `author` (menulis
+   > `templates/<Framework>/` atau `--output`, bukan artefak distribusi) dan `webui`
+   > (server lokal, tidak pernah distribusi) **aman** dijalankan di root repo authoring.
 
 3. **Laporkan hasil** ke user: folder yang dibuat, struktur file, dan langkah distribusi.
 
@@ -682,12 +799,13 @@ Setelah set instruksi selesai, WAJIB:
 - **PREFER** pola berulang & bukti struktural untuk identifikasi pola.
 - **PREFER** implementasi tetangga sebagai contoh utama.
 - **JANGAN** memparafrase snippet kanonik — salin verbatim dan sertakan evidence anchor.
-- **DILARANG KERAS menjalankan `./bin/ainstruct` di root repository AI-Instructions ini**
-  (bengkel authoring). Menjalankannya di sini menimpa self-instruction repo (AGENTS.md) dan
+- **DILARANG KERAS menjalankan subcommand distribusi `ainstruct` di root repository
+  AI-Instructions ini** (bengkel authoring) — `distribute`/default, `reset`, `wipe`, dan
+  `init` non-`--dry-run`. Menjalankannya di sini menimpa self-instruction repo (AGENTS.md) dan
   memunculkan `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, `.continuerules`,
   `.clinerules/`, `.cursor/rules/`, `.github/`, `.aider.conf.yml`, `ai-instructions/` di root
-  dengan isi hasil generate = **KEGAGALAN TOTAL**. CLI hanya dijalankan di root proyek
-  konsumen.
+  dengan isi hasil generate = **KEGAGALAN TOTAL**. Subcommand distribusi hanya dijalankan di
+  root proyek konsumen. Subcommand non-distribusi `author` dan `webui` aman di sini.
 - **DILARANG KERAS men-commit artefak distribusi** (`AGENTS.md` berisi isi hasil-generate,
   `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, `.continuerules`,
   `.clinerules/`, `.cursor/rules/`, `.github/copilot-instructions.md`, `.aider.conf.yml`,
@@ -702,26 +820,55 @@ Setelah set instruksi selesai, WAJIB:
 ## 12. PERSIAPAN CORPUS BARU (Alur Singkat untuk User)
 
 Saat user berkata sekitar seperti: *"buat set instruksi untuk repo <X> ini"* atau
-*"generate instruction set untuk folder <path>"*, lakukan:
+*"generate instruction set untuk folder <path>"* (kelas 1), *"buat template framework
+dari dokumentasi resmi"* (kelas 2), atau *"buat set instruksi untuk proyek baru yang
+belum ada kodenya"* (kelas 3 — greenfield), lakukan sesuai kelas output (bagian 6E):
+
+**Kelas 1 (mode repo — repository proyek sudah jadi):**
 
 1. Load playbook ini.
 2. Eksplorasi repository target (bagian 3 — Protocol Eksplorasi, termasuk Phase 7: koleksi snippet & signature kanonik).
 3. Lakukan analisis (bagian 4).
-4. Pelajari set `templates/laravel/` sebagai bahan referensi kelengkapan & presisi (bagian 6D).
+4. Pelajari set `templates/laravel/` sebagai bahan referensi kelengkapan & presisi (bagian 6D — level PENUH).
 5. Buat folder baru `templates/<Framework>/` dengan struktur bagian 6.
 6. Tulis konstitusi + modul dengan evidence anchors dan snippet kanonik nyata.
 7. Verifikasi diri (bagian 9).
-8. Jalankan `ainstruct <Framework>` dari **root proyek konsumen** (bukan repo
-   authoring ini — lihat bagian 10 & 11).
+8. Jalankan subcommand distribusi `ainstruct <Framework>` dari **root proyek konsumen**
+   (bukan repo authoring ini — lihat bagian 10 & 11).
 9. Laporkan ke user dengan ringkasan Artifact A + B.
 
+**Kelas 2 (mode docs — framework template set):**
+
+1. Load playbook ini.
+2. Tentukan target & versi framework (dari permintaan user atau stack populer).
+3. Riset dokumentasi resmi (tool agent `webfetch`/`websearch`); kumpulkan URL resmi,
+   versi, tanggal akses, dan declared forms (bagian 6E / 6D level TEMPLATE).
+4. Tulis konstitusi + modul grounded di docs dengan honesty marker; konklusi docs
+   ber-ceiling `WEAK`; tandai batas horizon "sampai proyek membuktikan".
+5. Verifikasi diri (bagian 9 — checklist kelas 2).
+6. Distribusikan dari root proyek konsumen (bila sudah ada konsumen) atau simpan sebagai
+   template konsumen siap pakai; laporkan ke user.
+
+**Kelas 3 (mode docs + `--spec` — greenfield project set):**
+
+1. Load playbook ini.
+2. **Spec dulu**: pastikan `MASTER_BUILD_SPECIFICATION.md` lengkap & presisi (Klausa 5).
+   Bila belum ada, STOP dan tanya operator secara mendetil sebelum menulis apa pun.
+3. Riset docs resmi untuk konvensi yang belum dideklarasikan spec (anchor URL+versi+tanggal).
+4. Tulis konstitusi + modul grounded di spec + docs pengisi; tandai WEAK/UNKNOWN eksplisit.
+5. Verifikasi diri (bagian 9 — checklist kelas 3).
+6. Tulis kewajiban **re-grounding saat kode lahir** (konstitusi + `10-quality-gates.md`).
+7. Distribusikan ke proyek greenfield konsumen; laporkan ke user.
+
 > **PERINGATAN TERAKHIR**: Set instruksi yang generik = gagal. Set instruksi yang
-> menyalin buta dari folder lain tanpa bukti repository target = gagal kecuali pola
-> universal yang memang didukung bukti. Setiap klaim arsitektur WAJIB memiliki anchor
-> bukti nyata. Set instruksi yang menyebut/membahas repository contoh di bagian manapun
-> = KEGAGALAN TOTAL (Klausa 1). Set instruksi yang tidak memuat Klausa 2–5 (dilarang kerja
-> di main, commit message ringkas, inisiasi git, protokol MASTER_BUILD_SPECIFICATION)
-> = KEGAGALAN TOTAL. Set yang tidak memenuhi REFERENCE BAR bagian 6D (termasuk bank snippet
-> terpusat) = BELUM SELESAI. Menjalankan `./bin/ainstruct` di root repo authoring ini
-> atau men-commit artefak distribusinya ke repo ini = KEGAGALAN TOTAL. Kepatuhan penuh pada
+> menyalin buta dari folder lain tanpa bukti = gagal kecuali pola universal yang memang
+> didukung bukti. Setiap klaim arsitektur WAJIB memiliki anchor bukti nyata (kelas 1:
+> path; kelas 2/3: URL+versi+tanggal). Set instruksi yang menyebut/membahas repository
+> contoh di bagian manapun = KEGAGALAN TOTAL (Klausa 1). Set instruksi yang tidak memuat
+> Klausa 2–5 (dilarang kerja di main, commit message ringkas, inisiasi git, protokol
+> MASTER_BUILD_SPECIFICATION) = KEGAGALAN TOTAL. Set kelas 3 tanpa re-grounding terjadwal
+> = KEGAGALAN TOTAL. Set yang tidak memenuhi REFERENCE BAR level kelasnya (bagian 6D)
+> = BELUM SELESAI. Menjalankan subcommand distribusi `ainstruct` (`distribute`/default,
+> `reset`, `wipe`, `init` non-`--dry-run`) di root repo authoring ini atau men-commit
+> artefak distribusinya ke repo ini = KEGAGALAN TOTAL. Kepatuhan penuh pada
 > playbook ini adalah SYARAT ABSOLUT.

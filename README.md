@@ -26,10 +26,13 @@ dan siklus hidup instruksi.
 ## Repo Ini Bukan Tempat Distribusi
 
 `ainstruct` (engine PHP di `bin/ainstruct`, paket Composer `lace/ainstruct`) menjalankan distribusi
-ke **arah `pwd`** (direktori tempat CLI dieksekusi). Menjalankannya di repo ini akan menimpa `AGENTS.md` (self-instruction arsitek)
+ke **arah `pwd`** (direktori tempat CLI dieksekusi). Menjalankan **subcommand distribusi** —
+`distribute`/default, `reset`, `wipe`, dan `init` non-`--dry-run` — di repo ini akan menimpa `AGENTS.md` (self-instruction arsitek)
 dan memunculkan artefak distribusi (`CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `ai-instructions/`,
 dll.) di root dengan isi hasil-generate. **Itu KESALAHAN KRITIS — KEGAGALAN TOTAL.**
-CLI hanya dijalankan di root **proyek konsumen**.
+Subcommand distribusi hanya dijalankan di root **proyek konsumen**. Subcommand non-distribusi
+`author` (sesi authoring → menulis ke `templates/<Framework>/` atau `--output`) dan `webui`
+(server lokal, tidak pernah distribusi) **aman** dijalankan di repo ini.
 
 ## Layout Repository
 
@@ -337,7 +340,8 @@ Setiap set WAJIB memuat KLAUSA 1–5 (detail penuh di `ARCHITECT-GUIDE.md` bagia
 
 ## Larangan Mutlak (di Repo Ini)
 
-- **DILARANG** menjalankan `./bin/ainstruct` di root repo ini.
+- **DILARANG** menjalankan subcommand distribusi `ainstruct` (`distribute`/default, `reset`,
+  `wipe`, `init` non-`--dry-run`) di root repo ini.
 - **DILARANG** men-commit artefak distribusi (AGENTS.md isi hasil-generate, CLAUDE.md,
   GEMINI.md, .cursorrules, .windsurfrules, .continuerules, .clinerules/, .cursor/rules/,
   .github/, .aider.conf.yml, ai-instructions/) ke repo ini.

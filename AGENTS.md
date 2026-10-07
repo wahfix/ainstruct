@@ -20,10 +20,14 @@
 
 ## 2. LARANGAN MUTLAK (KEGAGALAN TOTAL)
 
-- **DILARANG menjalankan `./bin/ainstruct` di root repository AI-Instructions ini.**
-  CLI itu hanya untuk root **proyek konsumen** (mis. `/home/ubuntu/Project/WahyuLingu/lingusid`).
-  Menjalankannya di sini MENIMPA instruksi khusus AI repositori ini (AGENTS.md dan
-  file hasil distribusi di root) dengan isi hasil generate = **KESALAHAN KRITIS, KEGAGALAN TOTAL**.
+- **DILARANG menjalankan subcommand distribusi `ainstruct` di root repository AI-Instructions ini.**
+  Subcommand distribusi — `distribute`/default, `reset`, `wipe`, dan `init` non-`--dry-run` —
+  menebar artefak hasil generate ke `pwd`; semuanya hanya untuk root **proyek konsumen**
+  (mis. `/home/ubuntu/Project/WahyuLingu/lingusid`). Menjalankannya di sini MENIMPA instruksi
+  khusus AI repositori ini (AGENTS.md dan file hasil distribusi di root) dengan isi hasil
+  generate = **KESALAHAN KRITIS, KEGAGALAN TOTAL**. Subcommand non-distribusi `author`
+  (sesi authoring → menulis ke `templates/<Framework>/` atau `--output`, bukan artefak
+  distribusi) dan `webui` (server lokal, tidak pernah distribusi) **aman** di sini.
 - DILARANG men-commit artefak hasil distribusi (`AGENTS.md` berisi isi hasil-generate,
   `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.windsurfrules`, `.continuerules`,
   `.clinerules/`, `.cursor/rules/`, `.github/copilot-instructions.md`, `.aider.conf.yml`,
